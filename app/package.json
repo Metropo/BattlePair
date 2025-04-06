@@ -1,0 +1,19 @@
+{
+    "name": "battle-pair",
+    "version": "0.0.1",
+    "description": "Webanwendung zur Anzeige von Lasertag-Runden und zur Verwaltung von Spielpaarungen",
+    "main": "backend/server.js",
+    "scripts": {
+        "start": "node backend/server.js",
+        "dev": "nodemon backend/server.js"
+    },
+    "author": "Christian Tarne",
+    "license": "MIT",
+    "dependencies": {
+        "express": "^4.18.2",
+        "sqlite3": "^5.1.4"
+    },
+    "devDependencies": {
+        "nodemon": "^3.1.9"
+    }
+}

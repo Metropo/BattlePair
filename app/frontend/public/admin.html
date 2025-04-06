@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin-Oberfläche - BattlePair</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header>
+    <h1>Admin-Oberfläche - BattlePair</h1>
+  </header>
+
+  <!-- Bereich für Tische & Laufkundschaft -->
+  <section id="table-and-walkin-section">
+    <h2>Tische &amp; Laufkundschaft</h2>
+    <div id="tables-container">
+      <!-- Hier werden die Tischkarten dynamisch geladen -->
+    </div>
+    <div id="walkin-section">
+      <h3>Laufkundschaft</h3>
+      <input type="text" id="walkin-input" placeholder="Spielername hinzufügen">
+      <button id="add-walkin-btn">Hinzufügen</button>
+      <ul id="walkin-list">
+        <!-- Hier werden die Laufkundschaftseinträge dynamisch geladen -->
+      </ul>
+    </div>
+  </section>
+
+  <!-- Bereich für Matches -->
+  <section id="matches-section">
+    <h2>Matches</h2>
+    <div id="matches-container">
+      <!-- Hier werden die Match-Zeilen dynamisch angezeigt -->
+    </div>
+    <button id="new-match-btn">Neues Match anlegen</button>
+    <button id="global-start-match-btn">Match starten</button>
+  </section>
+
+  <!-- Einstellungen Modal mit Tischverwaltung -->
+  <section id="settings-section">
+    <button id="open-settings">Einstellungen</button>
+    <div id="settings-modal" class="modal hidden">
+      <div class="modal-content">
+        <span id="close-settings" class="close">&times;</span>
+        <h2>Einstellungen</h2>
+        <form id="settings-form">
+          <label for="rounds-to-display">Anzahl anzuzeigender Runden:</label>
+          <input type="number" id="rounds-to-display" name="roundsToDisplay" min="1" value="3">
+          <label for="admin-password">Admin Passwort:</label>
+          <input type="password" id="admin-password" name="adminPassword">
+          <button type="submit">Einstellungen speichern</button>
+        </form>
+        <hr>
+        <h3>Tische verwalten</h3>
+        <ul id="settings-tables-list">
+          <!-- Dynamisch geladene Tischliste -->
+        </ul>
+        <input type="text" id="new-table-name-settings" placeholder="Neuer Tischname">
+        <button id="add-table-settings-btn">Tisch hinzufügen</button>
+      </div>
+    </div>
+  </section>
+
+  <script src="js/admin.js"></script>
+</body>
+</html>
