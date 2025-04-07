@@ -18,6 +18,7 @@ db.run(`
     participants TEXT,
     game_mode_id INTEGER,
     is_started INTEGER DEFAULT 0,
+    started_at DATETIME DEFAULT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )
 `, (err) => {
@@ -38,9 +39,49 @@ exports.getMatches = (req, res) => {
       participants: row.participants ? JSON.parse(row.participants) : [],
       game_mode_id: row.game_mode_id,
       is_started: row.is_started,
-      created_at: row.created_at
+      created_at: row.created_at,
+      started_at: row.started_at || null
     }));
     res.json(matches);
+  });
+};
+
+// Match-Statistiken für einen Teilnehmer abrufen
+exports.getParticipantMatchStats = (req, res) => {
+  const { participantId, participantType } = req.params;
+  
+  // First get the round_start value for the participant
+  const getRoundStartQuery = participantType === 'table' 
+    ? 'SELECT round_start FROM tables WHERE id = ?'
+    : 'SELECT round_start FROM walkins WHERE id = ?';
+
+  db.get(getRoundStartQuery, [participantId], (err, participant) => {
+    if (err) {
+      console.error('Fehler beim Abrufen des round_start:', err);
+      return res.status(500).json({ error: 'Fehler beim Abrufen des round_start' });
+    }
+
+    const roundStart = participant ? participant.round_start : 0;
+    
+    // Now get the match counts
+    db.all(`
+      SELECT 
+        COUNT(CASE WHEN is_started = 1 AND id >= ? THEN 1 END) as played_matches,
+        COUNT(CASE WHEN is_started = 0 AND id >= ? THEN 1 END) as planned_matches
+      FROM matches
+      WHERE EXISTS (
+        SELECT 1 
+        FROM json_each(participants) 
+        WHERE json_extract(value, '$.id') = CAST(? AS TEXT)
+          AND json_extract(value, '$.type') = ?
+      )
+    `, [roundStart, roundStart, participantId, participantType], (err, rows) => {
+      if (err) {
+        console.error('Fehler beim Abrufen der Match-Statistiken:', err);
+        return res.status(500).json({ error: 'Fehler beim Abrufen der Match-Statistiken' });
+      }
+      res.json(rows[0] || { played_matches: 0, planned_matches: 0 });
+    });
   });
 };
 
@@ -94,16 +135,18 @@ exports.startMatch = (req, res) => {
   if (!id) {
     return res.status(400).json({ error: 'Match-ID ist erforderlich' });
   }
-  db.run(`UPDATE matches SET is_started = 1 WHERE id = ?`,
-    [id],
-    function(err) {
+  db.run(`
+    UPDATE matches 
+    SET is_started = 1, 
+        started_at = CURRENT_TIMESTAMP 
+    WHERE id = ?
+  `, [id], function(err) {
     if (err) {
-        console.error('Fehler beim Starten des Matches:', err);
+      console.error('Fehler beim Starten des Matches:', err);
       return res.status(500).json({ error: 'Fehler beim Starten des Matches' });
     }
     res.json({ message: 'Match gestartet' });
-    }
-  );
+  });
 };
 
 // Ein Match löschen

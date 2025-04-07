@@ -101,12 +101,13 @@ body {
   
   /* Laufkundschaft */
   #walkin-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     background-color: #2c2c2c;
-    border: 1px solid #444;
-    padding: 5px;
+    padding: 10px;
     margin: 5px 0;
-    border-radius: 3px;
-    list-style: none;
+    border-radius: 4px;
   }
   
   /* Match-Zeilen */
@@ -241,4 +242,61 @@ body {
 
 .reset-table-btn:hover {
   background-color: #d32f2f;
+}
+
+/* Match Statistics */
+.match-stats {
+  margin: 10px 0;
+  padding: 8px;
+  background-color: #333;
+  border-radius: 4px;
+}
+
+.match-stat {
+  display: flex;
+  justify-content: space-between;
+  margin: 4px 0;
+  font-size: 0.85rem;
+}
+
+.stat-label {
+  color: #aaa;
+}
+
+.stat-value {
+  color: #fff;
+  font-weight: bold;
+}
+
+.walkin-name {
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.delete-walkin-btn {
+  background-color: #f44336;
+  margin-left: 10px;
+}
+
+.delete-walkin-btn:hover {
+  background-color: #d32f2f;
+}
+
+.reset-counter-btn {
+  background-color: #ff9800;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.reset-counter-btn:hover {
+  background-color: #f57c00;
+}
+
+.walkin-buttons {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
 } 

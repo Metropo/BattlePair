@@ -14,4 +14,7 @@ router.put('/', tableController.updateTable);
 // DELETE: Einen Tisch löschen
 router.delete('/', tableController.deleteTable);
 
+// Reset match counter for a table
+router.post('/reset', tableController.resetTableCounter);
+
 module.exports = router;

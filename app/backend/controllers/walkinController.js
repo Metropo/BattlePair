@@ -14,7 +14,8 @@ const db = new sqlite3.Database(dbPath, (err) => {
 db.run(`
   CREATE TABLE IF NOT EXISTS walkins (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL
+    name TEXT NOT NULL,
+    round_start INTEGER DEFAULT 0
   )
 `, (err) => {
   if (err) console.error('Fehler beim Erstellen der Walkins-Tabelle:', err);
@@ -51,5 +52,32 @@ exports.deleteWalkin = (req, res) => {
       return res.status(500).json({ error: 'Fehler beim Löschen der Laufkundschaft' });
     }
     res.json({ message: 'Laufkundschaft gelöscht' });
+  });
+};
+
+// Reset match counter for a walk-in
+exports.resetWalkinCounter = (req, res) => {
+  const { id } = req.body;
+  if (!id) {
+    return res.status(400).json({ error: 'ID ist erforderlich' });
+  }
+
+  // Get the current max match ID of started matches
+  db.get('SELECT MAX(id) as max_id FROM matches WHERE is_started = 1', [], (err, row) => {
+    if (err) {
+      console.error('Fehler beim Abrufen der maximalen Match-ID:', err);
+      return res.status(500).json({ error: 'Fehler beim Abrufen der maximalen Match-ID' });
+    }
+
+    const roundStart = (row.max_id || 0) + 1;
+
+    // Update the walk-in's round_start value
+    db.run('UPDATE walkins SET round_start = ? WHERE id = ?', [roundStart, id], function(err) {
+      if (err) {
+        console.error('Fehler beim Zurücksetzen des Match-Zählers:', err);
+        return res.status(500).json({ error: 'Fehler beim Zurücksetzen des Match-Zählers' });
+      }
+      res.json({ success: true, round_start: roundStart });
+    });
   });
 };

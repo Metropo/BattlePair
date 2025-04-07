@@ -5,80 +5,113 @@ document.addEventListener('DOMContentLoaded', () => {
   // Track last focused input
   let lastFocusedInput = null;
 
+  // Function to count matches for a participant
+  async function countParticipantMatches(participantId, participantType) {
+    try {
+      const response = await fetch(`/api/matches/stats/${participantType}/${participantId}`);
+      const stats = await response.json();
+      return {
+        playedMatches: stats.played_matches || 0,
+        plannedMatches: stats.planned_matches || 0
+      };
+    } catch (err) {
+      console.error('Fehler beim Abrufen der Match-Statistiken:', err);
+      return { playedMatches: 0, plannedMatches: 0 };
+    }
+  }
+
   function loadTables() {
     fetch('/api/tables')
       .then(res => res.json())
       .then(tables => {
         const tablesContainer = document.getElementById('tables-container');
         tablesContainer.innerHTML = '';
-        tables.forEach(table => {
-          const card = document.createElement('div');
-          card.classList.add('table-card');
-          card.dataset.tableId = table.id;
-          card.innerHTML = `
-            <h3>${table.name}</h3>
-            <label>Temporärer Name:</label>
-            <input type="text" class="temp-name" value="${table.temp_name || ''}" placeholder="Temporärer Name">
-            <label>Spieleranzahl:</label>
-            <input type="number" class="player-count" value="${table.player_count || 0}" placeholder="Anzahl Spieler">
-            <div class="table-buttons">
-              <button class="update-table-btn">Speichern</button>
-              <button class="reset-table-btn">Zurücksetzen</button>
-            </div>
-          `;
-          tablesContainer.appendChild(card);
-
-          // Get input elements
-          const tempNameInput = card.querySelector('.temp-name');
-          const playerCountInput = card.querySelector('.player-count');
-          const saveButton = card.querySelector('.update-table-btn');
-          const resetButton = card.querySelector('.reset-table-btn');
-
-          // Track focus
-          tempNameInput.addEventListener('focus', () => {
-            lastFocusedInput = { id: table.id, type: 'temp-name' };
-          });
-          playerCountInput.addEventListener('focus', () => {
-            lastFocusedInput = { id: table.id, type: 'player-count' };
-          });
-
-          // Function to save changes
-          const saveChanges = () => {
-            const id = card.dataset.tableId;
-            const name = card.querySelector('h3').textContent;
-            const tempName = tempNameInput.value;
-            const playerCount = playerCountInput.value;
-            updateTable(id, name, tempName, playerCount);
-          };
-
-          // Function to reset table
-          const resetTable = () => {
-            tempNameInput.value = '';
-            playerCountInput.value = '0';
-            saveChanges();
-          };
-
-          // Save on blur (when input loses focus)
-          tempNameInput.addEventListener('blur', saveChanges);
-          playerCountInput.addEventListener('blur', saveChanges);
-
-          // Save on button click
-          saveButton.addEventListener('click', saveChanges);
-          
-          // Reset on button click
-          resetButton.addEventListener('click', resetTable);
+        
+        // Load match stats for all tables
+        const tablePromises = tables.map(async table => {
+          const matchCounts = await countParticipantMatches(table.id, 'table');
+          return { table, matchCounts };
         });
 
-        // Restore focus if there was a last focused input
-        if (lastFocusedInput) {
-          const card = document.querySelector(`.table-card[data-table-id="${lastFocusedInput.id}"]`);
-          if (card) {
-            const input = card.querySelector(`.${lastFocusedInput.type}`);
-            if (input) {
-              input.focus();
-            }
-          }
-        }
+        Promise.all(tablePromises)
+          .then(tableData => {
+            tableData.forEach(({ table, matchCounts }) => {
+              const card = document.createElement('div');
+              card.classList.add('table-card');
+              card.dataset.tableId = table.id;
+              card.innerHTML = `
+                <h3>${table.name}</h3>
+                <label>Temporärer Name:</label>
+                <input type="text" class="temp-name" value="${table.temp_name || ''}" placeholder="Temporärer Name">
+                <label>Spieleranzahl:</label>
+                <input type="number" class="player-count" value="${table.player_count || 0}" placeholder="Anzahl Spieler">
+                <div class="match-stats">
+                  <div class="match-stat">
+                    <span class="stat-label">Gespielte Matches:</span>
+                    <span class="stat-value">${matchCounts.playedMatches}</span>
+                  </div>
+                  <div class="match-stat">
+                    <span class="stat-label">Geplante Matches:</span>
+                    <span class="stat-value">${matchCounts.plannedMatches}</span>
+                  </div>
+                </div>
+                <div class="table-buttons">
+                  <button class="update-table-btn">Speichern</button>
+                  <button class="reset-table-btn">Zurücksetzen</button>
+                  <button class="reset-counter-btn">Counter Reset</button>
+                </div>
+              `;
+              tablesContainer.appendChild(card);
+
+              // Get input elements
+              const tempNameInput = card.querySelector('.temp-name');
+              const playerCountInput = card.querySelector('.player-count');
+              const saveButton = card.querySelector('.update-table-btn');
+              const resetButton = card.querySelector('.reset-table-btn');
+
+              // Track focus
+              tempNameInput.addEventListener('focus', () => {
+                lastFocusedInput = { id: table.id, type: 'temp-name' };
+              });
+              playerCountInput.addEventListener('focus', () => {
+                lastFocusedInput = { id: table.id, type: 'player-count' };
+              });
+
+              // Function to save changes
+              const saveChanges = () => {
+                const id = card.dataset.tableId;
+                const name = card.querySelector('h3').textContent;
+                const tempName = tempNameInput.value;
+                const playerCount = playerCountInput.value;
+                updateTable(id, name, tempName, playerCount);
+              };
+
+              // Function to reset table
+              const resetTable = () => {
+                tempNameInput.value = '';
+                playerCountInput.value = '0';
+                saveChanges();
+              };
+
+              // Save on blur (when input loses focus)
+              tempNameInput.addEventListener('blur', saveChanges);
+              playerCountInput.addEventListener('blur', saveChanges);
+
+              // Save on button click
+              saveButton.addEventListener('click', saveChanges);
+              
+              // Reset on button click
+              resetButton.addEventListener('click', resetTable);
+
+              // Add reset counter button event listener
+              const resetCounterBtn = card.querySelector('.reset-counter-btn');
+              resetCounterBtn.addEventListener('click', () => {
+                if (confirm('Möchten Sie den Match-Zähler für diesen Tisch zurücksetzen?')) {
+                  resetMatchCounter(table.id, 'table');
+                }
+              });
+            });
+          });
       })
       .catch(err => console.error('Fehler beim Laden der Tische:', err));
   }
@@ -109,17 +142,48 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(walkins => {
         const walkinList = document.getElementById('walkin-list');
         walkinList.innerHTML = '';
-        walkins.forEach(walkin => {
-          const li = document.createElement('li');
-          li.dataset.id = walkin.id;
-          li.textContent = walkin.name;
-          const deleteBtn = document.createElement('button');
-          deleteBtn.textContent = 'Löschen';
-          deleteBtn.style.marginLeft = '10px';
-          deleteBtn.addEventListener('click', () => deleteWalkin(walkin.id));
-          li.appendChild(deleteBtn);
-          walkinList.appendChild(li);
+        
+        // Load match stats for all walkins
+        const walkinPromises = walkins.map(async walkin => {
+          const matchCounts = await countParticipantMatches(walkin.id, 'walkin');
+          return { walkin, matchCounts };
         });
+
+        Promise.all(walkinPromises)
+          .then(walkinData => {
+            walkinData.forEach(({ walkin, matchCounts }) => {
+              const li = document.createElement('li');
+              li.dataset.id = walkin.id;
+              li.innerHTML = `
+                <span class="walkin-name">${walkin.name}</span>
+                <div class="match-stats">
+                  <div class="match-stat">
+                    <span class="stat-label">Gespielt:</span>
+                    <span class="stat-value">${matchCounts.playedMatches}</span>
+                  </div>
+                  <div class="match-stat">
+                    <span class="stat-label">Geplant:</span>
+                    <span class="stat-value">${matchCounts.plannedMatches}</span>
+                  </div>
+                </div>
+                <div class="walkin-buttons">
+                  <button class="delete-walkin-btn">Löschen</button>
+                  <button class="reset-counter-btn">Counter Reset</button>
+                </div>
+              `;
+              const deleteBtn = li.querySelector('.delete-walkin-btn');
+              deleteBtn.addEventListener('click', () => deleteWalkin(walkin.id));
+              
+              const resetCounterBtn = li.querySelector('.reset-counter-btn');
+              resetCounterBtn.addEventListener('click', () => {
+                if (confirm('Möchten Sie den Match-Zähler für diese Laufkundschaft zurücksetzen?')) {
+                  resetMatchCounter(walkin.id, 'walkin');
+                }
+              });
+              
+              walkinList.appendChild(li);
+            });
+          });
       })
       .catch(err => console.error('Fehler beim Laden der Laufkundschaft:', err));
   }
@@ -348,6 +412,43 @@ document.addEventListener('DOMContentLoaded', () => {
       .catch(err => console.error('Fehler beim Anlegen des Matches:', err));
   }
 
+  // Function to update match statistics for a specific element
+  async function updateMatchStats(element, participantId, participantType) {
+    try {
+      const matchCounts = await countParticipantMatches(participantId, participantType);
+      const statsContainer = element.querySelector('.match-stats');
+      if (statsContainer) {
+        statsContainer.innerHTML = `
+          <div class="match-stat">
+            <span class="stat-label">Gespielte Matches:</span>
+            <span class="stat-value">${matchCounts.playedMatches}</span>
+          </div>
+          <div class="match-stat">
+            <span class="stat-label">Geplante Matches:</span>
+            <span class="stat-value">${matchCounts.plannedMatches}</span>
+          </div>
+        `;
+      }
+    } catch (err) {
+      console.error('Fehler beim Aktualisieren der Match-Statistiken:', err);
+    }
+  }
+
+  // Function to refresh all match statistics
+  function refreshMatchStats() {
+    // Update table stats
+    document.querySelectorAll('.table-card').forEach(card => {
+      const tableId = card.dataset.tableId;
+      updateMatchStats(card, tableId, 'table');
+    });
+
+    // Update walk-in stats
+    document.querySelectorAll('#walkin-list li').forEach(li => {
+      const walkinId = li.dataset.id;
+      updateMatchStats(li, walkinId, 'walkin');
+    });
+  }
+
   // Aktualisiert ein Match – jetzt mit Teilnehmern und optionalem Spielmodus
   function updateMatch(matchId, participants, game_mode_id) {
     fetch('/api/matches/update', {
@@ -359,6 +460,7 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(result => {
         console.log('Match aktualisiert:', result);
         loadMatches();
+        refreshMatchStats(); // Only update stats, not the entire displays
       })
       .catch(err => console.error('Fehler beim Aktualisieren des Matches:', err));
   }
@@ -373,6 +475,7 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(result => {
         console.log('Match gestartet:', result);
         loadMatches();
+        refreshMatchStats(); // Only update stats, not the entire displays
       })
       .catch(err => console.error('Fehler beim Starten des Matches:', err));
   }
@@ -387,6 +490,7 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(result => {
         console.log('Match gelöscht:', result);
         loadMatches();
+        refreshMatchStats(); // Only update stats, not the entire displays
       })
       .catch(err => console.error('Fehler beim Löschen des Matches:', err));
   }
@@ -616,4 +720,25 @@ document.addEventListener('DOMContentLoaded', () => {
     descInput.value = '';
     iconInput.value = '';
   });
+
+  // Function to refresh all match-related displays
+  function refreshMatchDisplays() {
+    loadTables();
+    loadWalkins();
+  }
+
+  // Function to reset match counter for a participant
+  function resetMatchCounter(participantId, participantType) {
+    fetch(`/api/${participantType}s/reset`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: participantId })
+    })
+      .then(res => res.json())
+      .then(result => {
+        console.log('Match counter reset:', result);
+        refreshMatchStats(); // Update the statistics display
+      })
+      .catch(err => console.error('Fehler beim Zurücksetzen des Match-Zählers:', err));
+  }
 });

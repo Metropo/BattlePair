@@ -16,7 +16,8 @@ db.run(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     temp_name TEXT,
-    player_count INTEGER DEFAULT 0
+    player_count INTEGER DEFAULT 0,
+    round_start INTEGER DEFAULT 0
   )
 `, (err) => {
   if (err) {
@@ -81,5 +82,32 @@ exports.deleteTable = (req, res) => {
     } else {
       res.json({ message: 'Tisch gelöscht' });
     }
+  });
+};
+
+// Reset match counter for a table
+exports.resetTableCounter = (req, res) => {
+  const { id } = req.body;
+  if (!id) {
+    return res.status(400).json({ error: 'ID ist erforderlich' });
+  }
+
+  // Get the current max match ID of started matches
+  db.get('SELECT MAX(id) as max_id FROM matches WHERE is_started = 1', [], (err, row) => {
+    if (err) {
+      console.error('Fehler beim Abrufen der maximalen Match-ID:', err);
+      return res.status(500).json({ error: 'Fehler beim Abrufen der maximalen Match-ID' });
+    }
+
+    const roundStart = (row.max_id || 0) + 1;
+
+    // Update the table's round_start value
+    db.run('UPDATE tables SET round_start = ? WHERE id = ?', [roundStart, id], function(err) {
+      if (err) {
+        console.error('Fehler beim Zurücksetzen des Match-Zählers:', err);
+        return res.status(500).json({ error: 'Fehler beim Zurücksetzen des Match-Zählers' });
+      }
+      res.json({ success: true, round_start: roundStart });
+    });
   });
 };
