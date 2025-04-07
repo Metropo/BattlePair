@@ -177,6 +177,20 @@ document.addEventListener('DOMContentLoaded', () => {
       .catch(err => console.error('Fehler beim Löschen des Spielmodus:', err));
   }
 
+  function updateGameMode(id, name, description, icon) {
+    fetch('/api/gamemodes', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, name, description, icon })
+    })
+      .then(res => res.json())
+      .then(result => {
+        console.log('Spielmodus aktualisiert:', result);
+        loadSettingsGameModes();
+      })
+      .catch(err => console.error('Fehler beim Aktualisieren des Spielmodus:', err));
+  }
+
   // ---------------------------
   // Match-Verwaltung
   // ---------------------------
@@ -458,12 +472,83 @@ document.addEventListener('DOMContentLoaded', () => {
         modes.forEach(mode => {
           const li = document.createElement('li');
           li.dataset.id = mode.id;
-          li.innerHTML = `<strong>${mode.name}</strong> – ${mode.description || ''}`;
+          
+          // Create edit form
+          const editForm = document.createElement('form');
+          editForm.classList.add('gamemode-edit-form');
+          editForm.style.display = 'none';
+          
+          const nameInput = document.createElement('input');
+          nameInput.type = 'text';
+          nameInput.value = mode.name;
+          nameInput.placeholder = 'Name';
+          
+          const descInput = document.createElement('input');
+          descInput.type = 'text';
+          descInput.value = mode.description || '';
+          descInput.placeholder = 'Beschreibung';
+          
+          const iconInput = document.createElement('input');
+          iconInput.type = 'text';
+          iconInput.value = mode.icon || '';
+          iconInput.placeholder = 'Icon URL';
+          
+          const saveBtn = document.createElement('button');
+          saveBtn.type = 'submit';
+          saveBtn.textContent = 'Speichern';
+          
+          const cancelBtn = document.createElement('button');
+          cancelBtn.type = 'button';
+          cancelBtn.textContent = 'Abbrechen';
+          
+          editForm.appendChild(nameInput);
+          editForm.appendChild(descInput);
+          editForm.appendChild(iconInput);
+          editForm.appendChild(saveBtn);
+          editForm.appendChild(cancelBtn);
+          
+          // Create display div
+          const displayDiv = document.createElement('div');
+          displayDiv.classList.add('gamemode-display');
+          displayDiv.innerHTML = `<strong>${mode.name}</strong> – ${mode.description || ''}`;
+          
+          // Create buttons
+          const editBtn = document.createElement('button');
+          editBtn.textContent = 'Bearbeiten';
+          editBtn.style.marginLeft = '10px';
+          
           const deleteBtn = document.createElement('button');
           deleteBtn.textContent = 'Löschen';
           deleteBtn.style.marginLeft = '10px';
+          
+          // Add event listeners
+          editBtn.addEventListener('click', () => {
+            displayDiv.style.display = 'none';
+            editForm.style.display = 'block';
+          });
+          
+          cancelBtn.addEventListener('click', () => {
+            displayDiv.style.display = 'block';
+            editForm.style.display = 'none';
+          });
+          
+          editForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            updateGameMode(
+              mode.id,
+              nameInput.value.trim(),
+              descInput.value.trim(),
+              iconInput.value.trim()
+            );
+          });
+          
           deleteBtn.addEventListener('click', () => deleteGameMode(mode.id));
-          li.appendChild(deleteBtn);
+          
+          // Append elements
+          displayDiv.appendChild(editBtn);
+          displayDiv.appendChild(deleteBtn);
+          li.appendChild(displayDiv);
+          li.appendChild(editForm);
           settingsModesList.appendChild(li);
         });
       })

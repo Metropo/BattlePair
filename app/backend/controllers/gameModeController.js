@@ -71,3 +71,23 @@ exports.deleteGameMode = (req, res) => {
     }
   });
 };
+
+// Spielmodus aktualisieren
+exports.updateGameMode = (req, res) => {
+  const { id, name, description, icon } = req.body;
+  if (!id || !name) {
+    return res.status(400).json({ error: 'ID und Name sind erforderlich' });
+  }
+  db.run(
+    `UPDATE game_modes SET name = ?, description = ?, icon = ? WHERE id = ?`,
+    [name, description || '', icon || '', id],
+    function(err) {
+      if (err) {
+        console.error('Fehler beim Aktualisieren des Spielmodus:', err);
+        res.status(500).json({ error: 'Fehler beim Aktualisieren des Spielmodus' });
+      } else {
+        res.json({ message: 'Spielmodus aktualisiert' });
+      }
+    }
+  );
+};

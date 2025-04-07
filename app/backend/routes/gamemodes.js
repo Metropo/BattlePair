@@ -8,6 +8,9 @@ router.get('/', gameModeController.getGameModes);
 // POST: Neuen Spielmodus anlegen
 router.post('/', gameModeController.createGameMode);
 
+// PUT: Einen Spielmodus aktualisieren
+router.put('/', gameModeController.updateGameMode);
+
 // DELETE: Einen Spielmodus löschen
 router.delete('/', gameModeController.deleteGameMode);
 
