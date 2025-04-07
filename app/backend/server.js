@@ -13,6 +13,7 @@ app.use('/api/tables', require('./routes/tables'));
 app.use('/api/settings', require('./routes/settings'));
 app.use('/api/walkins', require('./routes/walkins'));
 app.use('/api/gamemodes', require('./routes/gamemodes'));
+app.use('/api/backup', require('./routes/backup'));
 
 
 // Start des Servers

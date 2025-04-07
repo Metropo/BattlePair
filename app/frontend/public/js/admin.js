@@ -741,4 +741,88 @@ document.addEventListener('DOMContentLoaded', () => {
       })
       .catch(err => console.error('Fehler beim Zurücksetzen des Match-Zählers:', err));
   }
+
+  // Backup and Restore functionality
+  function createBackup() {
+    const includeWalkins = document.getElementById('include-walkins').checked;
+    const includeMatches = document.getElementById('include-matches').checked;
+
+    fetch('/api/backup/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ includeWalkins, includeMatches })
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          alert(data.error);
+          return;
+        }
+        
+        // Create download link
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `lasertag_backup_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        alert('Backup erfolgreich erstellt');
+      })
+      .catch(err => {
+        console.error('Fehler beim Erstellen des Backups:', err);
+        alert('Fehler beim Erstellen des Backups');
+      });
+  }
+
+  function restoreBackup() {
+    const fileInput = document.getElementById('backup-file');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+      alert('Bitte wählen Sie eine Backup-Datei aus');
+      return;
+    }
+
+    if (!confirm('Sind Sie sicher, dass Sie das Backup wiederherstellen möchten? Alle aktuellen Daten werden überschrieben.')) {
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const backupData = JSON.parse(e.target.result);
+        
+        fetch('/api/backup/restore', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(backupData)
+        })
+          .then(res => res.json())
+          .then(data => {
+            if (data.error) {
+              alert(data.error);
+              return;
+            }
+            alert('Backup erfolgreich wiederhergestellt');
+            location.reload(); // Reload the page to show updated data
+          })
+          .catch(err => {
+            console.error('Fehler beim Wiederherstellen des Backups:', err);
+            alert('Fehler beim Wiederherstellen des Backups');
+          });
+      } catch (err) {
+        console.error('Fehler beim Lesen der Backup-Datei:', err);
+        alert('Ungültiges Backup-Format');
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  // Backup and Restore buttons
+  document.getElementById('create-backup-btn').addEventListener('click', createBackup);
+  document.getElementById('restore-backup-btn').addEventListener('click', restoreBackup);
 });

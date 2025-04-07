@@ -69,6 +69,31 @@
         <input type="text" id="new-gamemode-description" placeholder="Beschreibung">
         <input type="text" id="new-gamemode-icon" placeholder="Icon URL">
         <button id="add-gamemode-btn">Spielmodus hinzufügen</button>
+        <hr>
+        <!-- Backup & Restore -->
+        <h3>Backup & Restore</h3>
+        <div class="backup-controls">
+          <div class="backup-options">
+            <h4>Backup erstellen</h4>
+            <div class="checkbox-group">
+              <label>
+                <input type="checkbox" id="include-walkins">
+                Laufkundschaft einschließen
+              </label>
+              <label>
+                <input type="checkbox" id="include-matches">
+                Matches einschließen
+              </label>
+            </div>
+            <button id="create-backup-btn" class="backup-btn">Backup erstellen</button>
+          </div>
+          
+          <div class="restore-options">
+            <h4>Backup wiederherstellen</h4>
+            <input type="file" id="backup-file" accept=".json">
+            <button id="restore-backup-btn" class="restore-btn">Backup wiederherstellen</button>
+          </div>
+        </div>
       </div>
     </div>
   </section>
