@@ -2,6 +2,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // ---------------------------
   // Tische-Verwaltung (Hauptbereich)
   // ---------------------------
+  // Track last focused input
+  let lastFocusedInput = null;
+
   function loadTables() {
     fetch('/api/tables')
       .then(res => res.json())
@@ -18,20 +21,64 @@ document.addEventListener('DOMContentLoaded', () => {
             <input type="text" class="temp-name" value="${table.temp_name || ''}" placeholder="Temporärer Name">
             <label>Spieleranzahl:</label>
             <input type="number" class="player-count" value="${table.player_count || 0}" placeholder="Anzahl Spieler">
-            <button class="update-table-btn">Aktualisieren</button>
+            <div class="table-buttons">
+              <button class="update-table-btn">Speichern</button>
+              <button class="reset-table-btn">Zurücksetzen</button>
+            </div>
           `;
           tablesContainer.appendChild(card);
-        });
-        document.querySelectorAll('.update-table-btn').forEach(button => {
-          button.addEventListener('click', (e) => {
-            const card = e.target.closest('.table-card');
+
+          // Get input elements
+          const tempNameInput = card.querySelector('.temp-name');
+          const playerCountInput = card.querySelector('.player-count');
+          const saveButton = card.querySelector('.update-table-btn');
+          const resetButton = card.querySelector('.reset-table-btn');
+
+          // Track focus
+          tempNameInput.addEventListener('focus', () => {
+            lastFocusedInput = { id: table.id, type: 'temp-name' };
+          });
+          playerCountInput.addEventListener('focus', () => {
+            lastFocusedInput = { id: table.id, type: 'player-count' };
+          });
+
+          // Function to save changes
+          const saveChanges = () => {
             const id = card.dataset.tableId;
             const name = card.querySelector('h3').textContent;
-            const tempName = card.querySelector('.temp-name').value;
-            const playerCount = card.querySelector('.player-count').value;
+            const tempName = tempNameInput.value;
+            const playerCount = playerCountInput.value;
             updateTable(id, name, tempName, playerCount);
-          });
+          };
+
+          // Function to reset table
+          const resetTable = () => {
+            tempNameInput.value = '';
+            playerCountInput.value = '0';
+            saveChanges();
+          };
+
+          // Save on blur (when input loses focus)
+          tempNameInput.addEventListener('blur', saveChanges);
+          playerCountInput.addEventListener('blur', saveChanges);
+
+          // Save on button click
+          saveButton.addEventListener('click', saveChanges);
+          
+          // Reset on button click
+          resetButton.addEventListener('click', resetTable);
         });
+
+        // Restore focus if there was a last focused input
+        if (lastFocusedInput) {
+          const card = document.querySelector(`.table-card[data-table-id="${lastFocusedInput.id}"]`);
+          if (card) {
+            const input = card.querySelector(`.${lastFocusedInput.type}`);
+            if (input) {
+              input.focus();
+            }
+          }
+        }
       })
       .catch(err => console.error('Fehler beim Laden der Tische:', err));
   }
