@@ -53,21 +53,49 @@ exports.createTable = (req, res) => {
 
 exports.updateTable = (req, res) => {
   const { id, name, temp_name, player_count } = req.body;
+  
   if (!id) {
     return res.status(400).json({ error: 'ID ist erforderlich' });
   }
-  db.run(
-    `UPDATE tables SET name = ?, temp_name = ?, player_count = ? WHERE id = ?`,
-    [name, temp_name || '', player_count || 0, id],
-    function(err) {
-      if (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Fehler beim Aktualisieren des Tisches' });
-      } else {
-        res.json({ message: 'Tisch aktualisiert' });
-      }
+
+  // Build the update query dynamically based on provided fields
+  const updates = [];
+  const params = [];
+
+  if (name !== undefined && name !== null) {
+    updates.push('name = ?');
+    params.push(name);
+  }
+
+  if (temp_name !== undefined) {
+    updates.push('temp_name = ?');
+    params.push(temp_name);
+  }
+
+  if (player_count !== undefined) {
+    updates.push('player_count = ?');
+    params.push(player_count);
+  }
+
+  if (updates.length === 0) {
+    return res.status(400).json({ error: 'Keine Änderungen angegeben' });
+  }
+
+  params.push(id);
+
+  const query = `
+    UPDATE tables 
+    SET ${updates.join(', ')}
+    WHERE id = ?
+  `;
+
+  db.run(query, params, function(err) {
+    if (err) {
+      console.error('Fehler beim Aktualisieren des Tisches:', err);
+      return res.status(500).json({ error: 'Fehler beim Aktualisieren des Tisches' });
     }
-  );
+    res.json({ message: 'Tisch aktualisiert', changes: this.changes });
+  });
 };
 
 exports.deleteTable = (req, res) => {

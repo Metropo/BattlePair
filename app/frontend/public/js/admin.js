@@ -36,66 +36,61 @@ document.addEventListener('DOMContentLoaded', () => {
         Promise.all(tablePromises)
           .then(tableData => {
             tableData.forEach(({ table, matchCounts }) => {
-              const card = document.createElement('div');
-              card.classList.add('table-card');
-              card.dataset.tableId = table.id;
-              card.innerHTML = `
-                <h3>${table.name}</h3>
-                <label>Temporärer Name:</label>
-                <input type="text" class="temp-name" value="${table.temp_name || ''}" placeholder="Temporärer Name">
-                <label>Spieleranzahl:</label>
-                <input type="number" class="player-count" value="${table.player_count || 0}" placeholder="Anzahl Spieler">
-                <div class="match-stats">
-                  <div class="match-stat">
-                    <span class="stat-label">Gespielte Matches:</span>
-                    <span class="stat-value">${matchCounts.playedMatches}</span>
-                  </div>
-                  <div class="match-stat">
-                    <span class="stat-label">Geplante Matches:</span>
-                    <span class="stat-value">${matchCounts.plannedMatches}</span>
-                  </div>
-                </div>
-                <div class="table-buttons">
-                  <button class="update-table-btn">Speichern</button>
-                  <button class="reset-table-btn">Zurücksetzen</button>
-                  <button class="reset-counter-btn">Counter Reset</button>
-                </div>
-              `;
+              const card = createTableCard(table, matchCounts);
               tablesContainer.appendChild(card);
 
               // Get input elements
-              const tempNameInput = card.querySelector('.temp-name');
-              const playerCountInput = card.querySelector('.player-count');
+              const tempTempNameInput = card.querySelector('input[id^="table-temp-name-"]');
+              const playerCountInput = card.querySelector('input[id^="table-players-"]');
               const saveButton = card.querySelector('.update-table-btn');
               const resetButton = card.querySelector('.reset-table-btn');
 
+              // Store original values
+              const originalValues = {
+                tempName: table.temp_name || '',
+                playerCount: table.player_count || 0
+              };
+
+              // Function to check for changes
+              const checkForChanges = () => {
+                const hasChanges = 
+                  tempTempNameInput.value !== originalValues.tempName ||
+                  parseInt(playerCountInput.value) !== parseInt(originalValues.playerCount);
+                
+                saveButton.classList.toggle('has-changes', hasChanges);
+              };
+
               // Track focus
-              tempNameInput.addEventListener('focus', () => {
-                lastFocusedInput = { id: table.id, type: 'temp-name' };
+              tempTempNameInput.addEventListener('focus', () => {
+                lastFocusedInput = { id: table.id, type: 'temp-temp-name' };
               });
               playerCountInput.addEventListener('focus', () => {
                 lastFocusedInput = { id: table.id, type: 'player-count' };
               });
 
+              // Check for changes on input
+              tempTempNameInput.addEventListener('input', checkForChanges);
+              playerCountInput.addEventListener('input', checkForChanges);
+
               // Function to save changes
               const saveChanges = () => {
-                const id = card.dataset.tableId;
-                const name = card.querySelector('h3').textContent;
-                const tempName = tempNameInput.value;
+                const id = table.id;
+                const tempName = tempTempNameInput.value || null;
                 const playerCount = playerCountInput.value;
-                updateTable(id, name, tempName, playerCount);
+                updateTable(id, undefined, tempName, playerCount);
+                
+                // Update original values after save
+                originalValues.tempName = tempName || '';
+                originalValues.playerCount = playerCount;
+                checkForChanges();
               };
 
               // Function to reset table
               const resetTable = () => {
-                tempNameInput.value = '';
+                tempTempNameInput.value = '';
                 playerCountInput.value = '0';
                 saveChanges();
               };
-
-              // Save on blur (when input loses focus)
-              tempNameInput.addEventListener('blur', saveChanges);
-              playerCountInput.addEventListener('blur', saveChanges);
 
               // Save on button click
               saveButton.addEventListener('click', saveChanges);
@@ -114,6 +109,40 @@ document.addEventListener('DOMContentLoaded', () => {
           });
       })
       .catch(err => console.error('Fehler beim Laden der Tische:', err));
+  }
+
+  function createTableCard(table, matchCounts) {
+    const card = document.createElement('div');
+    card.className = 'table-card';
+    card.dataset.tableId = table.id;
+    card.innerHTML = `
+      <h3>${table.name}</h3>
+      <label for="table-temp-name-${table.id}">Temporärer Name:</label>
+      <input type="text" id="table-temp-name-${table.id}" value="${table.temp_name || ''}" placeholder="Temporärer Name">
+      <label for="table-players-${table.id}">Spieler:</label>
+      <input type="number" id="table-players-${table.id}" value="${table.player_count || 0}" min="0">
+      <div class="match-stats">
+        <div class="match-stat">
+          <span class="stat-label">Gespielte Matches:</span>
+          <span class="stat-value">${matchCounts.playedMatches || 0}</span>
+        </div>
+        <div class="match-stat">
+          <span class="stat-label">Geplante Matches:</span>
+          <span class="stat-value">${matchCounts.plannedMatches || 0}</span>
+        </div>
+      </div>
+      <div class="table-buttons">
+        <button class="update-table-btn">Speichern</button>
+        <div class="reset-dropdown">
+          <button class="reset-trigger">Reset</button>
+          <div class="reset-menu">
+            <button class="reset-table-btn" onclick="resetTable(${table.id})">Tisch zurücksetzen</button>
+            <button class="reset-counter-btn" onclick="resetTableCounter(${table.id})">Counter zurücksetzen</button>
+          </div>
+        </div>
+      </div>
+    `;
+    return card;
   }
 
   function updateTable(id, name, temp_name, player_count) {
@@ -523,8 +552,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ---------------------------
   const settingsModal = document.getElementById('settings-modal');
   const openSettingsBtn = document.getElementById('open-settings');
-  const closeSettingsBtn = document.getElementById('close-settings');
-  const settingsForm = document.getElementById('settings-form');
+  const closeBtn = document.querySelector('.close');
 
   openSettingsBtn.addEventListener('click', () => {
     settingsModal.classList.remove('hidden');
@@ -532,7 +560,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadSettingsGameModes();
   });
 
-  closeSettingsBtn.addEventListener('click', () => {
+  closeBtn.addEventListener('click', () => {
     settingsModal.classList.add('hidden');
   });
 
@@ -540,14 +568,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.target === settingsModal) {
       settingsModal.classList.add('hidden');
     }
-  });
-
-  settingsForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const formData = new FormData(settingsForm);
-    const settings = Object.fromEntries(formData.entries());
-    console.log('Einstellungen gespeichert:', settings);
-    settingsModal.classList.add('hidden');
   });
 
   // Laden der Tischliste für das Settings-Modal
@@ -825,4 +845,21 @@ document.addEventListener('DOMContentLoaded', () => {
   // Backup and Restore buttons
   document.getElementById('create-backup-btn').addEventListener('click', createBackup);
   document.getElementById('restore-backup-btn').addEventListener('click', restoreBackup);
+
+  // Tab switching functionality
+  const tabButtons = document.querySelectorAll('.tab-btn');
+  const tabContents = document.querySelectorAll('.tab-content');
+
+  tabButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      // Remove active class from all buttons and contents
+      tabButtons.forEach(btn => btn.classList.remove('active'));
+      tabContents.forEach(content => content.classList.remove('active'));
+
+      // Add active class to clicked button and corresponding content
+      button.classList.add('active');
+      const tabId = button.getAttribute('data-tab');
+      document.getElementById(`${tabId}-tab`).classList.add('active');
+    });
+  });
 });
