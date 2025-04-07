@@ -80,5 +80,39 @@ body {
     font-size: 1.4rem;
     color: #fff;
     text-align: right;
+  margin-top: 10px;
+}
+
+/* Spielmodus-Container innerhalb einer Match-Card */
+.match-gamemode {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  margin-bottom: 15px;
+  background-color: #222;
+  border: 1px solid #555;
+  border-radius: 3px;
+}
+
+.match-gamemode img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.match-gamemode .gamemode-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.match-gamemode .gamemode-name {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.match-gamemode .gamemode-desc {
+  font-size: 0.9rem;
+  color: #ccc;
   }
   

@@ -138,13 +138,55 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ---------------------------
+  // Spielmodi-Verwaltung (Game Modes)
+  // ---------------------------
+  function loadGameModes() {
+    return fetch('/api/gamemodes')
+      .then(res => res.json())
+      .catch(err => {
+        console.error('Fehler beim Laden der Spielmodi:', err);
+        return [];
+      });
+  }
+
+  function addGameMode(name, description, icon) {
+    fetch('/api/gamemodes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, description, icon })
+    })
+      .then(res => res.json())
+      .then(result => {
+        console.log('Spielmodus hinzugefügt:', result);
+        loadSettingsGameModes();
+      })
+      .catch(err => console.error('Fehler beim Hinzufügen des Spielmodus:', err));
+  }
+
+  function deleteGameMode(id) {
+    fetch('/api/gamemodes', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    })
+      .then(res => res.json())
+      .then(result => {
+        console.log('Spielmodus gelöscht:', result);
+        loadSettingsGameModes();
+      })
+      .catch(err => console.error('Fehler beim Löschen des Spielmodus:', err));
+  }
+
+  // ---------------------------
   // Match-Verwaltung
   // ---------------------------
+  // Hier können Matches angelegt, bearbeitet und (über Dropdown) mit einem Spielmodus versehen werden.
   function loadMatches() {
     fetch('/api/matches')
       .then(res => res.json())
       .then(matches => {
         loadGlobalParticipants().then(globalParticipants => {
+          loadGameModes().then(gameModes => {
           // Nur noch nicht gestartete Matches anzeigen
           const pendingMatches = matches.filter(m => m.is_started == 0);
           const matchesContainer = document.getElementById('matches-container');
@@ -154,7 +196,24 @@ document.addEventListener('DOMContentLoaded', () => {
             matchRow.classList.add('match-row');
             matchRow.dataset.matchId = match.id;
 
-            // Container mit Rahmen für die Teilnehmer
+              // Dropdown für Spielmodus
+              const gameModeSelect = document.createElement('select');
+              gameModeSelect.classList.add('match-gamemode');
+              let optionsHtml = `<option value="">-- Kein Spielmodus --</option>`;
+              gameModes.forEach(gm => {
+                optionsHtml += `<option value="${gm.id}">${gm.name}</option>`;
+              });
+              gameModeSelect.innerHTML = optionsHtml;
+              if (match.game_mode_id) {
+                gameModeSelect.value = match.game_mode_id;
+              }
+              gameModeSelect.addEventListener('change', () => {
+                const newGameModeId = gameModeSelect.value ? parseInt(gameModeSelect.value) : null;
+                updateMatch(match.id, match.participants, newGameModeId);
+              });
+              matchRow.appendChild(gameModeSelect);
+              
+              // Container mit Rahmen für die Teilnehmer-Boxen
             const participantsContainer = document.createElement('div');
             participantsContainer.classList.add('match-participants');
             globalParticipants.forEach(participant => {
@@ -196,7 +255,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const infoContainer = document.createElement('div');
             infoContainer.classList.add('match-info');
             infoContainer.textContent = `Personen: ${totalPersons}`;
-
+            
             // Löschen-Button für das Match
             const deleteBtn = document.createElement('button');
             deleteBtn.textContent = 'Löschen';
@@ -209,14 +268,16 @@ document.addEventListener('DOMContentLoaded', () => {
           });
         });
       })
-      .catch(err => console.error('Fehler beim Laden der Matches:', err));
+      .catch(err => console.error('Fehler beim Laden der Participants:', err));
+    })
+    .catch(err => console.error('Fehler beim Laden der Matches:', err));
   }
 
   function createEmptyMatch() {
     fetch('/api/matches', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ participants: [] })
+      body: JSON.stringify({ participants: [], game_mode_id: null })
     })
       .then(res => res.json())
       .then(result => {
@@ -226,11 +287,12 @@ document.addEventListener('DOMContentLoaded', () => {
       .catch(err => console.error('Fehler beim Anlegen des Matches:', err));
   }
 
-  function updateMatch(matchId, participants) {
+  // Aktualisiert ein Match – jetzt mit Teilnehmern und optionalem Spielmodus
+  function updateMatch(matchId, participants, game_mode_id) {
     fetch('/api/matches/update', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: matchId, participants })
+      body: JSON.stringify({ id: matchId, participants, game_mode_id })
     })
       .then(res => res.json())
       .then(result => {
@@ -292,7 +354,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadMatches(); // Matches laden
 
   // ---------------------------
-  // Einstellungen Modal inkl. Tischverwaltung
+  // Einstellungen Modal inkl. Tisch- und Spielmodus-Verwaltung
   // ---------------------------
   const settingsModal = document.getElementById('settings-modal');
   const openSettingsBtn = document.getElementById('open-settings');
@@ -302,6 +364,7 @@ document.addEventListener('DOMContentLoaded', () => {
   openSettingsBtn.addEventListener('click', () => {
     settingsModal.classList.remove('hidden');
     loadSettingsTables();
+    loadSettingsGameModes();
   });
 
   closeSettingsBtn.addEventListener('click', () => {
@@ -382,4 +445,43 @@ document.addEventListener('DOMContentLoaded', () => {
       })
       .catch(err => console.error('Fehler beim Löschen des Tisches:', err));
   }
+
+  // ---------------------------
+  // Spielmodi-Verwaltung im Settings-Modal
+  // ---------------------------
+  function loadSettingsGameModes() {
+    fetch('/api/gamemodes')
+      .then(res => res.json())
+      .then(modes => {
+        const settingsModesList = document.getElementById('settings-gamemodes-list');
+        settingsModesList.innerHTML = '';
+        modes.forEach(mode => {
+          const li = document.createElement('li');
+          li.dataset.id = mode.id;
+          li.innerHTML = `<strong>${mode.name}</strong> – ${mode.description || ''}`;
+          const deleteBtn = document.createElement('button');
+          deleteBtn.textContent = 'Löschen';
+          deleteBtn.style.marginLeft = '10px';
+          deleteBtn.addEventListener('click', () => deleteGameMode(mode.id));
+          li.appendChild(deleteBtn);
+          settingsModesList.appendChild(li);
+        });
+      })
+      .catch(err => console.error('Fehler beim Laden der Spielmodi im Settings-Modal:', err));
+  }
+
+  const addGameModeBtn = document.getElementById('add-gamemode-btn');
+  addGameModeBtn.addEventListener('click', () => {
+    const nameInput = document.getElementById('new-gamemode-name');
+    const descInput = document.getElementById('new-gamemode-description');
+    const iconInput = document.getElementById('new-gamemode-icon');
+    const name = nameInput.value.trim();
+    const description = descInput.value.trim();
+    const icon = iconInput.value.trim();
+    if (!name) return;
+    addGameMode(name, description, icon);
+    nameInput.value = '';
+    descInput.value = '';
+    iconInput.value = '';
+  });
 });

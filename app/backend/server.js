@@ -12,6 +12,8 @@ app.use('/api/matches', require('./routes/matches'));
 app.use('/api/tables', require('./routes/tables'));
 app.use('/api/settings', require('./routes/settings'));
 app.use('/api/walkins', require('./routes/walkins'));
+app.use('/api/gamemodes', require('./routes/gamemodes'));
+
 
 // Start des Servers
 app.listen(port, () => {

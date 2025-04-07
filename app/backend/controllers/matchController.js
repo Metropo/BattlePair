@@ -5,7 +5,7 @@ const dbPath = path.join(__dirname, '../database/database.sqlite');
 
 const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
-    console.error('Datenbankverbindung fehlgeschlagen:', err);
+    console.error('Fehler beim Verbinden mit der Datenbank (Matches):', err);
   } else {
     console.log('Mit SQLite-Datenbank verbunden (Matches)');
   }
@@ -15,7 +15,8 @@ const db = new sqlite3.Database(dbPath, (err) => {
 db.run(`
   CREATE TABLE IF NOT EXISTS matches (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    participants TEXT,  -- JSON-Array der Teilnehmer (Tische und Walkins)
+    participants TEXT,
+    game_mode_id INTEGER,
     is_started INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )
@@ -29,12 +30,13 @@ db.run(`
 exports.getMatches = (req, res) => {
   db.all(`SELECT * FROM matches ORDER BY created_at ASC`, [], (err, rows) => {
     if (err) {
-      console.error(err);
+      console.error('Fehler beim Abrufen der Matches:', err);
       return res.status(500).json({ error: 'Fehler beim Abrufen der Matches' });
     }
     const matches = rows.map(row => ({
       id: row.id,
       participants: row.participants ? JSON.parse(row.participants) : [],
+      game_mode_id: row.game_mode_id,
       is_started: row.is_started,
       created_at: row.created_at
     }));
@@ -42,25 +44,30 @@ exports.getMatches = (req, res) => {
   });
 };
 
-// Ein neues Match anlegen (hier typischerweise mit einem leeren Teilnehmer-Array)
+// Ein neues Match anlegen (mit Teilnehmern und optionalem Spielmodus)
+// Erwartet im Request-Body: { participants: [ ... ], game_mode_id: <number|null> }
 exports.createMatch = (req, res) => {
-  const { participants } = req.body;
+  const { participants, game_mode_id } = req.body;
   if (!participants || !Array.isArray(participants)) {
     return res.status(400).json({ error: 'Teilnehmer müssen als Array übergeben werden' });
   }
   const participantsJson = JSON.stringify(participants);
-  db.run(`INSERT INTO matches (participants) VALUES (?)`, [participantsJson], function(err) {
+  db.run(`INSERT INTO matches (participants, game_mode_id) VALUES (?, ?)`,
+    [participantsJson, game_mode_id || null],
+    function(err) {
     if (err) {
-      console.error(err);
+        console.error('Fehler beim Anlegen des Matches:', err);
       return res.status(500).json({ error: 'Fehler beim Anlegen des Matches' });
     }
     res.status(201).json({ message: 'Match angelegt', id: this.lastID });
-  });
+    }
+  );
 };
 
-// Ein bestehendes Match aktualisieren (z. B. Teilnehmer hinzufügen oder entfernen)
+// Ein bestehendes Match aktualisieren – hier können die Teilnehmer und der Spielmodus aktualisiert werden.
+// Erwartet: { id, participants: [...], game_mode_id }
 exports.updateMatch = (req, res) => {
-  const { id, participants } = req.body;
+  const { id, participants, game_mode_id } = req.body;
   if (!id) {
     return res.status(400).json({ error: 'Match-ID ist erforderlich' });
   }
@@ -68,41 +75,52 @@ exports.updateMatch = (req, res) => {
     return res.status(400).json({ error: 'Teilnehmer müssen als Array übergeben werden' });
   }
   const participantsJson = JSON.stringify(participants);
-  db.run(`UPDATE matches SET participants = ? WHERE id = ?`, [participantsJson, id], function(err) {
+  db.run(`UPDATE matches SET participants = ?, game_mode_id = ? WHERE id = ?`,
+    [participantsJson, game_mode_id || null, id],
+    function(err) {
     if (err) {
-      console.error(err);
+        console.error('Fehler beim Aktualisieren des Matches:', err);
       return res.status(500).json({ error: 'Fehler beim Aktualisieren des Matches' });
     }
     res.json({ message: 'Match aktualisiert' });
-  });
+    }
+  );
 };
 
 // Ein Match als gestartet markieren
+// Erwartet: { id }
 exports.startMatch = (req, res) => {
   const { id } = req.body;
   if (!id) {
     return res.status(400).json({ error: 'Match-ID ist erforderlich' });
   }
-  db.run(`UPDATE matches SET is_started = 1 WHERE id = ?`, [id], function(err) {
+  db.run(`UPDATE matches SET is_started = 1 WHERE id = ?`,
+    [id],
+    function(err) {
     if (err) {
-      console.error(err);
+        console.error('Fehler beim Starten des Matches:', err);
       return res.status(500).json({ error: 'Fehler beim Starten des Matches' });
     }
     res.json({ message: 'Match gestartet' });
-  });
+    }
+  );
 };
 
 // Ein Match löschen
+// Erwartet: { id }
 exports.deleteMatch = (req, res) => {
   const { id } = req.body;
   if (!id) {
     return res.status(400).json({ error: 'Match-ID ist erforderlich' });
   }
-  db.run(`DELETE FROM matches WHERE id = ?`, [id], function(err) {
+  db.run(`DELETE FROM matches WHERE id = ?`,
+    [id],
+    function(err) {
     if (err) {
-      console.error(err);
+        console.error('Fehler beim Löschen des Matches:', err);
       return res.status(500).json({ error: 'Fehler beim Löschen des Matches' });
     }
     res.json({ message: 'Match gelöscht' });
-  });
+    }
+  );
 };
