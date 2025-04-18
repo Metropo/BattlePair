@@ -40,10 +40,57 @@ main {
     border: 1px solid #444;
     border-radius: 5px;
     padding: 20px;
-    margin-bottom: 20px;
+    margin: 0px 10px 20px 10px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.5);
     transition: all 0.3s ease-in-out;
     opacity: 1;
+}
+
+/* Next Match Card */
+.match-card.next-match {
+    background-color: rgba(0, 102, 204, 0.2);
+    border: 2px solid #4da6ff;
+    box-shadow: 0 0 20px rgba(77, 166, 255, 0.3);
+    transform: scale(1.02);
+    position: relative;
+    z-index: 1;
+}
+
+.match-card.next-match::before {
+    content: "Nächstes Match";
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #4da6ff;
+    color: #fff;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    white-space: nowrap;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.match-card.next-match .participant-box {
+    background-color: rgba(77, 166, 255, 0.1);
+    border-color: #4da6ff;
+}
+
+.match-card.next-match .match-gamemode {
+    background-color: rgba(77, 166, 255, 0.1);
+    border-color: #4da6ff;
+}
+
+.match-card.next-match .match-info {
+    color: #4da6ff;
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(77, 166, 255, 0.3);
+}
+
+.match-card.next-match .participant-main {
+    color: #4da6ff;
+    text-shadow: 0 0 5px rgba(77, 166, 255, 0.2);
 }
 
 .match-card.fade-out {

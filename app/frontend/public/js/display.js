@@ -17,8 +17,17 @@ document.addEventListener('DOMContentLoaded', () => {
     return JSON.stringify(oldMatch) !== JSON.stringify(newMatch);
   }
 
+  // Helper function to determine if a match is the next one
+  function isNextMatch(match, allMatches) {
+    // Find the match with the lowest ID
+    const lowestIdMatch = allMatches.reduce((lowest, current) => {
+      return current.id < lowest.id ? current : lowest;
+    });
+    return match.id === lowestIdMatch.id;
+  }
+
   // Helper function to update a single match card
-  function updateMatchCard(match, globalParticipants, gameModes) {
+  function updateMatchCard(match, globalParticipants, gameModes, allMatches) {
     const matchKey = getMatchKey(match);
     const existingCard = document.querySelector(`[data-match-id="${match.id}"]`);
     
@@ -36,6 +45,11 @@ document.addEventListener('DOMContentLoaded', () => {
     matchCard.setAttribute('data-match-id', match.id);
     matchCard.style.opacity = '0';
     matchCard.style.transition = 'opacity 0.3s ease-in-out';
+
+    // Add next-match class if this is the next match
+    if (isNextMatch(match, allMatches)) {
+      matchCard.classList.add('next-match');
+    }
 
     // Game mode section
     if (match.game_mode_id) {
@@ -176,7 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Update or add matches
             pendingMatches.forEach(match => {
-              updateMatchCard(match, globalParticipants, gameModes);
+              updateMatchCard(match, globalParticipants, gameModes, pendingMatches);
             });
 
             // Update last state
