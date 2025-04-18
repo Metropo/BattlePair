@@ -1,6 +1,6 @@
 {
     "name": "battle-pair",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "description": "Webanwendung zur Anzeige von Lasertag-Runden und zur Verwaltung von Spielpaarungen",
     "main": "backend/server.js",
     "scripts": {
@@ -8,6 +8,7 @@
         "dev": "nodemon backend/server.js"
     },
     "author": "Christian Tarne",
+    "homepage": "https://github.com/Metropo/BattlePair",
     "license": "MIT",
     "dependencies": {
         "express": "^4.18.2",
