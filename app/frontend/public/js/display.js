@@ -3,8 +3,22 @@ document.addEventListener('DOMContentLoaded', () => {
   let lastState = {
     matches: [],
     participants: [],
-    gameModes: []
+    gameModes: [],
+    settings: {
+      display_matches_count: 4 // Default value
+    }
   };
+
+  // Load settings
+  async function loadSettings() {
+    try {
+      const response = await fetch('/api/settings');
+      const settings = await response.json();
+      lastState.settings = settings;
+    } catch (error) {
+      console.error('Error loading settings:', error);
+    }
+  }
 
   // Helper function to create a unique key for a match
   function getMatchKey(match) {
@@ -170,52 +184,66 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Load and update matches
-  function loadMatches() {
-    fetch('/api/matches')
-      .then(response => response.json())
-      .then(matches => {
-        const pendingMatches = matches.filter(match => match.is_started == 0);
-        const container = document.getElementById('matches-container');
+  async function loadMatches() {
+    try {
+      const [matchesResponse, settingsResponse] = await Promise.all([
+        fetch('/api/matches'),
+        fetch('/api/settings')
+      ]);
+      
+      const matches = await matchesResponse.json();
+      const settings = await settingsResponse.json();
+      
+      lastState.settings = settings;
+      const pendingMatches = matches.filter(match => match.is_started == 0);
+      const container = document.getElementById('matches-container');
 
-        if (pendingMatches.length === 0) {
-          if (container.children.length === 0 || 
-              (container.children.length === 1 && container.children[0].tagName === 'P')) {
-            container.innerHTML = '<p style="font-size:1.5rem; text-align:center;">Derzeit sind keine Matches verfügbar.</p>';
-          }
-          return;
+      if (pendingMatches.length === 0) {
+        if (container.children.length === 0 || 
+            (container.children.length === 1 && container.children[0].tagName === 'P')) {
+          container.innerHTML = '<p style="font-size:1.5rem; text-align:center;">Derzeit sind keine Matches verfügbar.</p>';
         }
+        return;
+      }
 
-        // Load participants and game modes
-        Promise.all([loadGlobalParticipants(), loadGameModes()])
-          .then(([globalParticipants, gameModes]) => {
-            // Remove matches that no longer exist
-            const existingMatchIds = new Set(pendingMatches.map(m => m.id));
-            document.querySelectorAll('.match-card').forEach(card => {
-              const matchId = parseInt(card.getAttribute('data-match-id'));
-              if (!existingMatchIds.has(matchId)) {
-                card.style.opacity = '0';
-                setTimeout(() => card.remove(), 300);
-              }
-            });
+      // Load participants and game modes
+      const [globalParticipants, gameModes] = await Promise.all([
+        loadGlobalParticipants(),
+        loadGameModes()
+      ]);
 
-            // Update or add matches
-            pendingMatches.forEach(match => {
-              updateMatchCard(match, globalParticipants, gameModes, pendingMatches);
-            });
+      // Remove matches that no longer exist
+      const existingMatchIds = new Set(pendingMatches.map(m => m.id));
+      document.querySelectorAll('.match-card').forEach(card => {
+        const matchId = parseInt(card.getAttribute('data-match-id'));
+        if (!existingMatchIds.has(matchId)) {
+          card.style.opacity = '0';
+          setTimeout(() => card.remove(), 300);
+        }
+      });
 
-            // Update last state
-            lastState = {
-              matches: pendingMatches,
-              participants: globalParticipants,
-              gameModes: gameModes
-            };
-          });
-      })
-      .catch(err => console.error('Fehler beim Laden der Matches:', err));
+      // Update or add matches (limited by display_matches_count)
+      const matchesToDisplay = pendingMatches.slice(0, settings.display_matches_count);
+      matchesToDisplay.forEach(match => {
+        updateMatchCard(match, globalParticipants, gameModes, matchesToDisplay);
+      });
+
+      // Update last state
+      lastState = {
+        matches: pendingMatches,
+        participants: globalParticipants,
+        gameModes: gameModes,
+        settings: settings
+      };
+    } catch (err) {
+      console.error('Fehler beim Laden der Matches:', err);
+    }
   }
 
   // Initial load and periodic updates
-  loadMatches();
-  setInterval(loadMatches, 10000);
+  loadSettings().then(() => {
+    loadMatches();
+    setInterval(loadMatches, 10000);
+  });
 });
   

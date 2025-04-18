@@ -2,10 +2,10 @@ const express = require('express');
 const router = express.Router();
 const settingsController = require('../controllers/settingsController');
 
-// GET: Persistente Einstellungen abrufen
-router.get('/', settingsController.getSettings);
+// Get all settings
+router.get('/', settingsController.getAllSettings);
 
-// POST: Persistente Einstellungen aktualisieren (z. B. passwortgeschützt)
-router.post('/', settingsController.updateSettings);
+// Update a setting
+router.post('/', settingsController.updateSetting);
 
 module.exports = router;

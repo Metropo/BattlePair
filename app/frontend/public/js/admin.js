@@ -558,6 +558,7 @@ document.addEventListener('DOMContentLoaded', () => {
     settingsModal.classList.remove('hidden');
     loadSettingsTables();
     loadSettingsGameModes();
+    loadSettings();
   });
 
   closeBtn.addEventListener('click', () => {
@@ -862,4 +863,49 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById(`${tabId}-tab`).classList.add('active');
     });
   });
+      
+    // Save settings when the save button is clicked
+    document.getElementById('save-settings-btn').addEventListener('click', saveSettings);
+
+  async function loadSettings() {
+    try {
+      const response = await fetch('/api/settings');
+      if (!response.ok) throw new Error('Failed to load settings');
+      
+      const settings = await response.json();
+      
+      // Update input fields with current settings
+      document.getElementById('display-matches-count').value = settings.display_matches_count || 4;
+      document.getElementById('match-length-minutes').value = settings.match_length_minutes || 15;
+      document.getElementById('break-length-minutes').value = settings.break_length_minutes || 5;
+    } catch (error) {
+      console.error('Error loading settings:', error);
+      alert('Fehler beim Laden der Einstellungen');
+    }
+  }
+
+  async function saveSettings() {
+    const settings = {
+      display_matches_count: parseInt(document.getElementById('display-matches-count').value),
+      match_length_minutes: parseInt(document.getElementById('match-length-minutes').value),
+      break_length_minutes: parseInt(document.getElementById('break-length-minutes').value)
+    };
+
+    try {
+      const response = await fetch('/api/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(settings)
+      });
+
+      if (!response.ok) throw new Error('Failed to save settings');
+      
+      alert('Einstellungen erfolgreich gespeichert');
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      alert('Fehler beim Speichern der Einstellungen');
+    }
+  }
 });
