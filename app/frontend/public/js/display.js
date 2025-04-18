@@ -35,7 +35,17 @@ document.addEventListener('DOMContentLoaded', () => {
       // Check if the match has actually changed
       const oldMatch = lastState.matches.find(m => m.id === match.id);
       if (!hasMatchChanged(oldMatch, match)) {
-        return; // No changes needed
+        // Still need to check if this should be the next match
+        const shouldBeNext = isNextMatch(match, allMatches);
+        const isCurrentlyNext = existingCard.classList.contains('next-match');
+        if (shouldBeNext !== isCurrentlyNext) {
+          if (shouldBeNext) {
+            existingCard.classList.add('next-match');
+          } else {
+            existingCard.classList.remove('next-match');
+          }
+        }
+        return; // No other changes needed
       }
       existingCard.remove();
     }
