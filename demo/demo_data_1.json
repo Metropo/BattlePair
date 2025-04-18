@@ -1,0 +1,76 @@
+{
+  "tables": [
+    {
+      "id": 1,
+      "name": "Tisch 1",
+      "temp_name": null,
+      "player_count": 0,
+      "round_start": 0
+    },
+    {
+      "id": 2,
+      "name": "Tisch 2",
+      "temp_name": null,
+      "player_count": 0,
+      "round_start": 0
+    },
+    {
+      "id": 3,
+      "name": "Tisch 3",
+      "temp_name": null,
+      "player_count": 0,
+      "round_start": 0
+    },
+    {
+      "id": 4,
+      "name": "Tisch 4",
+      "temp_name": null,
+      "player_count": 0,
+      "round_start": 0
+    }
+  ],
+  "game_modes": [
+    {
+      "id": 1,
+      "name": "Teams",
+      "description": "Zwei (oder mehr) Teams treten gegeneinander an und sammeln Punkte, indem sie Spieler des gegnerischen Teams markieren. Nach Ablauf der Zeit gewinnt das Team mit den meisten Treffern – perfekt, um strategische Absprachen und Deckungswechsel zu üben.",
+      "icon": ""
+    },
+    {
+      "id": 2,
+      "name": "Jeder gegen Jeden",
+      "description": "Jeder spielt gegen jeden: Es gibt keine Verbündeten, nur Ziele. Schnelles Reaktionsvermögen und gute Positionswahl sind entscheidend, weil sich die Fronten ständig ändern und man auf alles gefasst sein muss.",
+      "icon": ""
+    },
+    {
+      "id": 3,
+      "name": "Shadows",
+      "description": "Stealth‑Mission: Spieler können jederzeit zwischen Shot‑Mode (normales Feuer, schwach blinkende LEDs) und Missile‑Mode (nur Raketen, dafür völlig dunkel und schwer zu orten) umschalten. Wer per Rakete getroffen wird, leuchtet kurz hell auf – perfekte Gelegenheit für Anschleichmanöver.",
+      "icon": ""
+    },
+    {
+      "id": 4,
+      "name": "Colour Conquest",
+      "description": "In diesem Team‑Modus erobern Spieler Zielpunkte, um ihre Teamfarbe in der Arena zu „vermalen“; die Kontrolle wechselt dynamisch, wodurch sich das Kräfteverhältnis mehrmals pro Spiel kippen kann. Schnell erklärbar und bei Familien besonders beliebt.",
+      "icon": ""
+    }
+  ],
+  "settings": [],
+  "walkins": [
+    {
+      "id": 1,
+      "name": "Max Mustermann",
+      "round_start": 0
+    }
+  ],
+  "metadata": {
+    "timestamp": "2025-04-18T20:19:34.337Z",
+    "version": "1.0",
+    "tables": [
+      "tables",
+      "game_modes",
+      "settings",
+      "walkins"
+    ]
+  }
+}
