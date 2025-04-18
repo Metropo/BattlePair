@@ -6,113 +6,157 @@ body {
     background-size: cover;
     color: #e0e0e0;
     font-family: Arial, sans-serif;
-  }
-  
-  /* Header mit Logo */
-  header {
+}
+
+/* Header mit Logo */
+header {
     position: relative;
     text-align: center;
     height: 110px;
     padding: 20px;
-    /*background-color: rgba(17, 17, 17, 0.8); /* Leicht transparent, damit der Hintergrund durchscheint */
-  }
-  
-  header .logo {
+}
+
+header .logo {
     position: absolute;
     left: 20px;
     top: 20px;
     width: 150px;
-  }
-  
-  /* Überschrift */
-  h1 {
+}
+
+/* Überschrift */
+h1 {
     margin: 0;
     font-size: 2.2rem;
-  }
-  
-  /* Main Bereich */
-  main {
+}
+
+/* Main Bereich */
+main {
     padding: 20px;
-  }
-  
-  /* Match-Card */
-  .match-card {
+}
+
+/* Match-Card */
+.match-card {
     background-color: rgba(44, 44, 44, 0.219);
     border: 1px solid #444;
     border-radius: 5px;
     padding: 20px;
     margin-bottom: 20px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.5);
-  }
-  
-  /* Container für die Teilnehmer-Boxen */
-  .match-participants {
+    transition: all 0.3s ease-in-out;
+    opacity: 1;
+}
+
+.match-card.fade-out {
+    opacity: 0;
+    transform: translateY(-20px);
+}
+
+/* Container für die Teilnehmer-Boxen */
+.match-participants {
     display: flex;
     flex-wrap: wrap;
     gap: 15px;
     margin-bottom: 15px;
-  }
-  
-  /* Einzelne Teilnehmer-Box */
-  .participant-box {
+}
+
+/* Einzelne Teilnehmer-Box */
+.participant-box {
     background-color: #33333329;
     border: 1px solid #555;
     border-radius: 3px;
     padding: 15px;
     min-width: 120px;
     text-align: center;
-  }
-  
-  .participant-main {
+    transition: all 0.2s ease-in-out;
+}
+
+.participant-main {
     font-size: 1.4rem;
     font-weight: bold;
-  }
-  
-  .participant-sub {
+    transition: color 0.2s ease-in-out;
+}
+
+.participant-sub {
     font-size: 0.9rem;
     color: #aaa;
     margin-top: 5px;
-  }
-  
-  /* Anzeige der Gesamtpersonenanzahl */
-  .match-info {
+    transition: color 0.2s ease-in-out;
+}
+
+/* Anzeige der Gesamtpersonenanzahl */
+.match-info {
     font-weight: bold;
     font-size: 1.4rem;
     color: #fff;
     text-align: right;
-  margin-top: 10px;
+    margin-top: 10px;
+    transition: all 0.2s ease-in-out;
 }
 
 /* Spielmodus-Container innerhalb einer Match-Card */
 .match-gamemode {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px;
-  margin-bottom: 15px;
-  background-color: #222;
-  border: 1px solid #555;
-  border-radius: 3px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    margin-bottom: 15px;
+    background-color: #222;
+    border: 1px solid #555;
+    border-radius: 3px;
+    transition: all 0.2s ease-in-out;
 }
 
 .match-gamemode img {
-  width: 40px;
-  height: 40px;
-  object-fit: contain;
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    transition: transform 0.2s ease-in-out;
 }
 
 .match-gamemode .gamemode-details {
-  display: flex;
-  flex-direction: column;
+    display: flex;
+    flex-direction: column;
 }
 
 .match-gamemode .gamemode-name {
-  font-size: 1.2rem;
-  font-weight: bold;
+    font-size: 1.2rem;
+    font-weight: bold;
+    transition: color 0.2s ease-in-out;
 }
 
 .match-gamemode .gamemode-desc {
-  font-size: 0.9rem;
-  color: #ccc;
-  }
+    font-size: 0.9rem;
+    color: #ccc;
+    transition: color 0.2s ease-in-out;
+}
+
+/* No matches message */
+#matches-container > p {
+    text-align: center;
+    font-size: 1.5rem;
+    padding: 20px;
+    background-color: rgba(44, 44, 44, 0.219);
+    border-radius: 5px;
+    transition: all 0.3s ease-in-out;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .match-card {
+        padding: 15px;
+    }
+    
+    .participant-box {
+        min-width: 100px;
+        padding: 10px;
+    }
+    
+    .participant-main {
+        font-size: 1.2rem;
+    }
+    
+    .match-info {
+        font-size: 1.2rem;
+    }
+}
   
