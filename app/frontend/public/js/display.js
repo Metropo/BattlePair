@@ -89,7 +89,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const participantsContainer = document.createElement('div');
     participantsContainer.classList.add('match-participants');
 
-    match.participants.forEach(p => {
+    // Sort participants by ID
+    const sortedParticipants = match.participants.sort((a, b) => {
+      // First sort by type (tables before walkins)
+      if (a.type !== b.type) {
+        return a.type === 'table' ? -1 : 1;
+      }
+      // Then sort by ID within each type
+      return a.id - b.id;
+    });
+
+    sortedParticipants.forEach(p => {
       const participant = globalParticipants.find(tp => tp.type === p.type && tp.id == p.id);
       if (participant) {
         const box = document.createElement('div');
