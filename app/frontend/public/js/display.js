@@ -40,39 +40,16 @@ document.addEventListener('DOMContentLoaded', () => {
     return match.id === lowestIdMatch.id;
   }
 
-  // Helper function to update a single match card
-  function updateMatchCard(match, globalParticipants, gameModes, allMatches) {
-    const matchKey = getMatchKey(match);
-    const existingCard = document.querySelector(`[data-match-id="${match.id}"]`);
+  // Helper function to build match card content
+  function buildMatchCardContent(card, match, globalParticipants, gameModes, allMatches) {
+    // Clear existing content
+    card.innerHTML = '';
     
-    if (existingCard) {
-      // Check if the match has actually changed
-      const oldMatch = lastState.matches.find(m => m.id === match.id);
-      if (!hasMatchChanged(oldMatch, match)) {
-        // Still need to check if this should be the next match
-        const shouldBeNext = isNextMatch(match, allMatches);
-        const isCurrentlyNext = existingCard.classList.contains('next-match');
-        if (shouldBeNext !== isCurrentlyNext) {
-          if (shouldBeNext) {
-            existingCard.classList.add('next-match');
-          } else {
-            existingCard.classList.remove('next-match');
-          }
-        }
-        return; // No other changes needed
-      }
-      existingCard.remove();
-    }
-
-    const matchCard = document.createElement('div');
-    matchCard.classList.add('match-card');
-    matchCard.setAttribute('data-match-id', match.id);
-    matchCard.style.opacity = '0';
-    matchCard.style.transition = 'opacity 0.3s ease-in-out';
-
     // Add next-match class if this is the next match
     if (isNextMatch(match, allMatches)) {
-      matchCard.classList.add('next-match');
+      card.classList.add('next-match');
+    } else {
+      card.classList.remove('next-match');
     }
 
     // Game mode section
@@ -104,7 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         gamemodeContainer.appendChild(detailsDiv);
-        matchCard.appendChild(gamemodeContainer);
+        card.appendChild(gamemodeContainer);
       }
     }
 
@@ -126,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    matchCard.appendChild(participantsContainer);
+    card.appendChild(participantsContainer);
 
     // Player count section
     let totalPersons = match.participants.reduce((sum, p) => {
@@ -137,7 +114,50 @@ document.addEventListener('DOMContentLoaded', () => {
     const infoContainer = document.createElement('div');
     infoContainer.classList.add('match-info');
     infoContainer.textContent = `${totalPersons} Spieler`;
-    matchCard.appendChild(infoContainer);
+    card.appendChild(infoContainer);
+  }
+
+  // Helper function to update a single match card
+  function updateMatchCard(match, globalParticipants, gameModes, allMatches) {
+    const matchKey = getMatchKey(match);
+    const existingCard = document.querySelector(`[data-match-id="${match.id}"]`);
+    
+    if (existingCard) {
+      // Check if the match has actually changed
+      const oldMatch = lastState.matches.find(m => m.id === match.id);
+      if (!hasMatchChanged(oldMatch, match)) {
+        // Still need to check if this should be the next match
+        const shouldBeNext = isNextMatch(match, allMatches);
+        const isCurrentlyNext = existingCard.classList.contains('next-match');
+        if (shouldBeNext !== isCurrentlyNext) {
+          if (shouldBeNext) {
+            existingCard.classList.add('next-match');
+          } else {
+            existingCard.classList.remove('next-match');
+          }
+        }
+        return; // No other changes needed
+      }
+
+      // Update existing card content
+      existingCard.style.opacity = '0';
+      buildMatchCardContent(existingCard, match, globalParticipants, gameModes, allMatches);
+      
+      // Trigger reflow and fade in
+      existingCard.offsetHeight;
+      existingCard.style.opacity = '1';
+      return;
+    }
+
+    // Create new card if it doesn't exist
+    const matchCard = document.createElement('div');
+    matchCard.classList.add('match-card');
+    matchCard.setAttribute('data-match-id', match.id);
+    matchCard.style.opacity = '0';
+    matchCard.style.transition = 'opacity 0.3s ease-in-out';
+
+    // Build the card content
+    buildMatchCardContent(matchCard, match, globalParticipants, gameModes, allMatches);
 
     const container = document.getElementById('matches-container');
     container.appendChild(matchCard);
@@ -195,7 +215,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const settings = await settingsResponse.json();
       
       lastState.settings = settings;
-      const pendingMatches = matches.filter(match => match.is_started == 0);
+      const pendingMatches = matches
+        .filter(match => match.is_started == 0)
+        .sort((a, b) => a.id - b.id); // Sort matches by ID in ascending order
       const container = document.getElementById('matches-container');
 
       if (pendingMatches.length === 0) {
