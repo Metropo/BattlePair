@@ -391,7 +391,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     name: participant.name
                   });
                 }
-                updateMatch(match.id, newParticipants);
+                updateMatch(match.id, newParticipants, match.game_mode_id);
               });
               participantsContainer.appendChild(partElem);
             });
