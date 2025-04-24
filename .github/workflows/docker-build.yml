@@ -33,7 +33,7 @@ jobs:
           gzip battlepair.tar
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: battlepair-docker-image
           path: battlepair.tar.gz
