@@ -21,12 +21,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function loadTables() {
+    const tablesContainer = document.getElementById('tables-container');
+    tablesContainer.innerHTML = ''; // Clear the container before loading
+    
     fetch('/api/tables')
       .then(res => res.json())
       .then(tables => {
-        const tablesContainer = document.getElementById('tables-container');
-        tablesContainer.innerHTML = '';
-        
         // Load match stats for all tables
         const tablePromises = tables.map(async table => {
           const matchCounts = await countParticipantMatches(table.id, 'table');
@@ -154,13 +154,14 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(res => res.json())
       .then(result => {
         console.log('Tisch aktualisiert:', result);
-        loadTables();
-        loadSettingsTables(); // Aktualisiere auch die Tabelle im Settings-Modal
+        // Only reload tables if we're on the tables tab
+        if (document.querySelector('.tab-btn.active').getAttribute('data-tab') === 'tables') {
+          loadTables();
+        }
+        loadSettingsTables(); // Still need to update settings tables
       })
       .catch(err => console.error('Fehler beim Aktualisieren des Tisches:', err));
   }
-
-  loadTables(); // Haupt-Tische laden
 
   // ---------------------------
   // Laufkundschaft-Verwaltung
@@ -542,6 +543,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const globalStartMatchBtn = document.getElementById('global-start-match-btn');
   globalStartMatchBtn.addEventListener('click', startFirstMatch);
 
+  const globalStartMatchBtnHeader = document.getElementById('global-start-match-btn-header');
+  globalStartMatchBtnHeader.addEventListener('click', startFirstMatch);
+
   const newMatchBtn = document.getElementById('new-match-btn');
   newMatchBtn.addEventListener('click', createEmptyMatch);
 
@@ -550,27 +554,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // ---------------------------
   // Einstellungen Modal inkl. Tisch- und Spielmodus-Verwaltung
   // ---------------------------
-  const settingsModal = document.getElementById('settings-modal');
-  const openSettingsBtn = document.getElementById('open-settings');
-  const closeBtn = document.querySelector('.close');
-
-  openSettingsBtn.addEventListener('click', () => {
-    settingsModal.classList.remove('hidden');
-    loadSettingsTables();
-    loadSettingsGameModes();
-    loadSettings();
-  });
-
-  closeBtn.addEventListener('click', () => {
-    settingsModal.classList.add('hidden');
-  });
-
-  settingsModal.addEventListener('click', (e) => {
-    if (e.target === settingsModal) {
-      settingsModal.classList.add('hidden');
-    }
-  });
-
   // Laden der Tischliste für das Settings-Modal
   function loadSettingsTables() {
     fetch('/api/tables')
@@ -744,8 +727,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Function to refresh all match-related displays
   function refreshMatchDisplays() {
-    loadTables();
-    loadWalkins();
+    // Only load if we're on the relevant tab
+    if (document.querySelector('.tab-btn.active').getAttribute('data-tab') === 'tables') {
+      loadTables();
+    }
+    if (document.querySelector('.tab-btn.active').getAttribute('data-tab') === 'walkins') {
+      loadWalkins();
+    }
   }
 
   // Function to reset match counter for a participant
@@ -758,6 +746,12 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(res => res.json())
       .then(result => {
         console.log('Match counter reset:', result);
+        // Only reload if we're on the relevant tab
+        if (participantType === 'table' && document.querySelector('.tab-btn.active').getAttribute('data-tab') === 'tables') {
+          loadTables();
+        } else if (participantType === 'walkin' && document.querySelector('.tab-btn.active').getAttribute('data-tab') === 'walkins') {
+          loadWalkins();
+        }
         refreshMatchStats(); // Update the statistics display
       })
       .catch(err => console.error('Fehler beim Zurücksetzen des Match-Zählers:', err));
@@ -850,7 +844,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // Tab switching functionality
   const tabButtons = document.querySelectorAll('.tab-btn');
   const tabContents = document.querySelectorAll('.tab-content');
+  const settingsTabButtons = document.querySelectorAll('.settings-tab-btn');
+  const settingsTabContents = document.querySelectorAll('.settings-tab-content');
 
+  // Main tabs
   tabButtons.forEach(button => {
     button.addEventListener('click', () => {
       // Remove active class from all buttons and contents
@@ -861,11 +858,49 @@ document.addEventListener('DOMContentLoaded', () => {
       button.classList.add('active');
       const tabId = button.getAttribute('data-tab');
       document.getElementById(`${tabId}-tab`).classList.add('active');
+
+      // Load settings-related data only when settings tab is clicked
+      if (tabId === 'settings') {
+        loadSettingsTables();
+        loadSettingsGameModes();
+        loadSettings();
+      } else if (tabId === 'tables') {
+        loadTables();
+      } else if (tabId === 'walkins') {
+        loadWalkins();
+      } else if (tabId === 'matches') {
+        loadMatches();
+      }
     });
   });
-      
-    // Save settings when the save button is clicked
-    document.getElementById('save-settings-btn').addEventListener('click', saveSettings);
+
+  // Settings tabs
+  settingsTabButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      // Remove active class from all buttons and contents
+      settingsTabButtons.forEach(btn => btn.classList.remove('active'));
+      settingsTabContents.forEach(content => content.classList.remove('active'));
+
+      // Add active class to clicked button and corresponding content
+      button.classList.add('active');
+      const tabId = button.getAttribute('data-tab');
+      document.getElementById(`${tabId}-tab`).classList.add('active');
+    });
+  });
+
+  // Initial load - only load the active tab
+  const activeTab = document.querySelector('.tab-btn.active').getAttribute('data-tab');
+  if (activeTab === 'tables') {
+    loadTables();
+  } else if (activeTab === 'walkins') {
+    loadWalkins();
+  } else if (activeTab === 'matches') {
+    loadMatches();
+  } else if (activeTab === 'settings') {
+    loadSettingsTables();
+    loadSettingsGameModes();
+    loadSettings();
+  }
 
   async function loadSettings() {
     try {
