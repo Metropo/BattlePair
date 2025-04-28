@@ -149,6 +149,27 @@ exports.startMatch = (req, res) => {
   });
 };
 
+// Ein Match als nicht gestartet markieren
+// Erwartet: { id }
+exports.unstartMatch = (req, res) => {
+  const { id } = req.body;
+  if (!id) {
+    return res.status(400).json({ error: 'Match-ID ist erforderlich' });
+  }
+  db.run(`
+    UPDATE matches 
+    SET is_started = 0, 
+        started_at = NULL 
+    WHERE id = ?
+  `, [id], function(err) {
+    if (err) {
+      console.error('Fehler beim Zurücksetzen des Matches:', err);
+      return res.status(500).json({ error: 'Fehler beim Zurücksetzen des Matches' });
+    }
+    res.json({ message: 'Match zurückgesetzt' });
+  });
+};
+
 // Ein Match löschen
 // Erwartet: { id }
 exports.deleteMatch = (req, res) => {

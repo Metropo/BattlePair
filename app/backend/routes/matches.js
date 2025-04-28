@@ -17,6 +17,9 @@ router.put('/update', matchController.updateMatch);
 // PUT: Match starten
 router.put('/start', matchController.startMatch);
 
+// PUT: Match zurücksetzen
+router.put('/unstart', matchController.unstartMatch);
+
 // DELETE: Match löschen
 router.delete('/', matchController.deleteMatch);
 

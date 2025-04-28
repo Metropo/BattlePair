@@ -490,7 +490,7 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(result => {
         console.log('Match aktualisiert:', result);
         loadMatches();
-        refreshMatchStats(); // Only update stats, not the entire displays
+        refreshMatchDisplays(); // Add refresh call
       })
       .catch(err => console.error('Fehler beim Aktualisieren des Matches:', err));
   }
@@ -505,7 +505,7 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(result => {
         console.log('Match gestartet:', result);
         loadMatches();
-        refreshMatchStats(); // Only update stats, not the entire displays
+        refreshMatchDisplays(); // Add refresh call
       })
       .catch(err => console.error('Fehler beim Starten des Matches:', err));
   }
@@ -520,7 +520,7 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(result => {
         console.log('Match gelöscht:', result);
         loadMatches();
-        refreshMatchStats(); // Only update stats, not the entire displays
+        refreshMatchDisplays(); // Add refresh call
       })
       .catch(err => console.error('Fehler beim Löschen des Matches:', err));
   }
@@ -734,6 +734,120 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.querySelector('.tab-btn.active').getAttribute('data-tab') === 'walkins') {
       loadWalkins();
     }
+    if (document.querySelector('.tab-btn.active').getAttribute('data-tab') === 'history') {
+      loadHistory();
+    }
+  }
+
+  // Function to load and display match history
+  async function loadHistory() {
+    try {
+      const [matches, globalParticipants, gameModes] = await Promise.all([
+        fetch('/api/matches').then(res => res.json()),
+        loadGlobalParticipants(),
+        loadGameModes()
+      ]);
+
+      // Filter for started matches and sort by start time (newest first)
+      const startedMatches = matches
+        .filter(m => m.is_started === 1)
+        .sort((a, b) => new Date(b.started_at) - new Date(a.started_at))
+        .slice(0, 10); // Only show last 10 matches
+
+      const historyContainer = document.getElementById('history-container');
+      historyContainer.innerHTML = '';
+
+      if (startedMatches.length === 0) {
+        historyContainer.innerHTML = '<p>Keine Matches in der Historie.</p>';
+        return;
+      }
+
+      startedMatches.forEach(match => {
+        const matchCard = document.createElement('div');
+        matchCard.className = 'history-card';
+        matchCard.dataset.matchId = match.id;
+
+        // Format the start time
+        const startTime = new Date(match.started_at);
+        const formattedTime = startTime.toLocaleString('de-DE', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+
+        // Get game mode name
+        const gameMode = gameModes.find(gm => gm.id === match.game_mode_id);
+        const gameModeName = gameMode ? gameMode.name : 'Kein Spielmodus';
+
+        // Calculate total players
+        const totalPlayers = match.participants.reduce((sum, p) => {
+          const participant = globalParticipants.find(tp => tp.type === p.type && tp.id == p.id);
+          return sum + (participant ? participant.player_count : 0);
+        }, 0);
+
+        // Create participant list
+        const participantList = match.participants.map(p => {
+          const participant = globalParticipants.find(tp => tp.type === p.type && tp.id == p.id);
+          return participant ? participant.display : p.name;
+        }).join(', ');
+
+        matchCard.innerHTML = `
+          <div class="history-card-header">
+            <span class="history-time">Gestartet um: ${formattedTime}</span>
+            <span class="history-gamemode">Spielmodus: ${gameModeName}</span>
+          </div>
+          <div class="history-participants">${participantList}</div>
+          <div class="history-info">${totalPlayers} Spieler</div>
+          <button class="unstart-match-btn">Match zurücksetzen</button>
+        `;
+
+        // Add event listener for unstart button
+        const unstartBtn = matchCard.querySelector('.unstart-match-btn');
+        unstartBtn.addEventListener('click', () => {
+          if (confirm('Sind Sie sicher, dass Sie dieses Match zurücksetzen möchten?')) {
+            unstartMatch(match.id);
+          }
+        });
+
+        historyContainer.appendChild(matchCard);
+      });
+    } catch (err) {
+      console.error('Fehler beim Laden der Historie:', err);
+      alert('Fehler beim Laden der Historie');
+    }
+  }
+
+  // Function to unstart a match
+  function unstartMatch(matchId) {
+    fetch('/api/matches/unstart', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: matchId })
+    })
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.text().then(text => {
+          try {
+            return text ? JSON.parse(text) : {};
+          } catch (e) {
+            console.error('Error parsing JSON:', e);
+            return {};
+          }
+        });
+      })
+      .then(result => {
+        console.log('Match zurückgesetzt:', result);
+        loadHistory();
+        loadMatches();
+      })
+      .catch(err => {
+        console.error('Fehler beim Zurücksetzen des Matches:', err);
+        alert('Fehler beim Zurücksetzen des Matches. Bitte versuchen Sie es später erneut.');
+      });
   }
 
   // Function to reset match counter for a participant
@@ -847,6 +961,23 @@ document.addEventListener('DOMContentLoaded', () => {
   const settingsTabButtons = document.querySelectorAll('.settings-tab-btn');
   const settingsTabContents = document.querySelectorAll('.settings-tab-content');
 
+  // Function to load data for a specific tab
+  function loadTabData(tabId) {
+    if (tabId === 'settings') {
+      loadSettingsTables();
+      loadSettingsGameModes();
+      loadSettings();
+    } else if (tabId === 'tables') {
+      loadTables();
+    } else if (tabId === 'walkins') {
+      loadWalkins();
+    } else if (tabId === 'matches') {
+      loadMatches();
+    } else if (tabId === 'history') {
+      loadHistory();
+    }
+  }
+
   // Main tabs
   tabButtons.forEach(button => {
     button.addEventListener('click', () => {
@@ -859,18 +990,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const tabId = button.getAttribute('data-tab');
       document.getElementById(`${tabId}-tab`).classList.add('active');
 
-      // Load settings-related data only when settings tab is clicked
-      if (tabId === 'settings') {
-        loadSettingsTables();
-        loadSettingsGameModes();
-        loadSettings();
-      } else if (tabId === 'tables') {
-        loadTables();
-      } else if (tabId === 'walkins') {
-        loadWalkins();
-      } else if (tabId === 'matches') {
-        loadMatches();
-      }
+      // Load appropriate data for the tab
+      loadTabData(tabId);
     });
   });
 
@@ -890,17 +1011,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initial load - only load the active tab
   const activeTab = document.querySelector('.tab-btn.active').getAttribute('data-tab');
-  if (activeTab === 'tables') {
-    loadTables();
-  } else if (activeTab === 'walkins') {
-    loadWalkins();
-  } else if (activeTab === 'matches') {
-    loadMatches();
-  } else if (activeTab === 'settings') {
-    loadSettingsTables();
-    loadSettingsGameModes();
-    loadSettings();
-  }
+  loadTabData(activeTab);
 
   // Add event listener for save settings button
   document.getElementById('save-settings-btn').addEventListener('click', saveSettings);
