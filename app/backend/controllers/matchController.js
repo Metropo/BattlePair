@@ -27,9 +27,25 @@ db.run(`
   }
 });
 
-// Alle Matches abrufen; Teilnehmer werden aus dem JSON-Text geparst
+// Get matches with optional filtering and limiting
 exports.getMatches = (req, res) => {
-  db.all(`SELECT * FROM matches ORDER BY created_at ASC`, [], (err, rows) => {
+  const { is_started, limit } = req.query;
+  let query = 'SELECT * FROM matches';
+  const params = [];
+
+  if (is_started !== undefined) {
+    query += ' WHERE is_started = ?';
+    params.push(is_started);
+  }
+
+  query += ' ORDER BY created_at DESC';
+
+  if (limit) {
+    query += ' LIMIT ?';
+    params.push(parseInt(limit));
+  }
+
+  db.all(query, params, (err, rows) => {
     if (err) {
       console.error('Fehler beim Abrufen der Matches:', err);
       return res.status(500).json({ error: 'Fehler beim Abrufen der Matches' });

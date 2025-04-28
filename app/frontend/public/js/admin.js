@@ -743,26 +743,20 @@ document.addEventListener('DOMContentLoaded', () => {
   async function loadHistory() {
     try {
       const [matches, globalParticipants, gameModes] = await Promise.all([
-        fetch('/api/matches').then(res => res.json()),
+        fetch('/api/matches?is_started=1&limit=10').then(res => res.json()),
         loadGlobalParticipants(),
         loadGameModes()
       ]);
 
-      // Filter for started matches and sort by start time (newest first)
-      const startedMatches = matches
-        .filter(m => m.is_started === 1)
-        .sort((a, b) => new Date(b.started_at) - new Date(a.started_at))
-        .slice(0, 10); // Only show last 10 matches
-
       const historyContainer = document.getElementById('history-container');
       historyContainer.innerHTML = '';
 
-      if (startedMatches.length === 0) {
+      if (matches.length === 0) {
         historyContainer.innerHTML = '<p>Keine Matches in der Historie.</p>';
         return;
       }
 
-      startedMatches.forEach(match => {
+      matches.forEach(match => {
         const matchCard = document.createElement('div');
         matchCard.className = 'history-card';
         matchCard.dataset.matchId = match.id;
