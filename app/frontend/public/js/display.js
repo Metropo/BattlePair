@@ -147,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
     playerCountContainer.classList.add('match-player-count');
     let playerCountText = `${totalPlayers} Spieler`;
     if (lastState.settings.max_players_per_round > 0) {
-      const availableSpots = lastState.settings.max_players_per_round - match.participants.length;
+      const availableSpots = lastState.settings.max_players_per_round - totalPlayers;
       playerCountText += ` (noch ${availableSpots} Plätze frei)`;
     }
     playerCountContainer.textContent = playerCountText;
@@ -261,7 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
       lastState.matches = pendingMatches;
       lastState.participants = globalParticipants;
       lastState.gameModes = gameModes;
-      
+
       // Remove any cards that no longer exist
       const existingCards = document.querySelectorAll('.match-card');
       existingCards.forEach(card => {

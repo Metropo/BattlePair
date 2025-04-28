@@ -73,10 +73,6 @@ function getGameModeName(match, gameModes) {
 
 // Calculate estimated start time for a match
 function calculateEstimatedStartTime(match, allMatches, settings, lastMatchStartTime) {
-  if (!lastMatchStartTime) {
-    return null; // No matches have been started yet
-  }
-
   // Find all matches that should start before this one
   const matchesBefore = allMatches
     .filter(m => m.id < match.id)
@@ -89,13 +85,17 @@ function calculateEstimatedStartTime(match, allMatches, settings, lastMatchStart
   const now = new Date();
   const minimumStartTime = new Date(now.getTime() + totalTimeBeforeMs);
 
-  // Calculate estimated start time based on last match
-  // Convert the last match start time to local time
-  const lastStartTime = new Date(lastMatchStartTime); // Add 'Z' to indicate UTC
-  const estimatedStartTime = new Date(lastStartTime.getTime() + matchLengthPlusBreakMs /* the match that is currently being played */ + totalTimeBeforeMs);
+  if (lastMatchStartTime) {
+    // Calculate estimated start time based on last match
+    // Convert the last match start time to local time
+    const lastStartTime = new Date(lastMatchStartTime); // Add 'Z' to indicate UTC
+    const estimatedStartTime = new Date(lastStartTime.getTime() + matchLengthPlusBreakMs /* the match that is currently being played */ + totalTimeBeforeMs);
 
-  // Return the later of the two times
-  return estimatedStartTime > minimumStartTime ? estimatedStartTime : minimumStartTime;
+    // Return the later of the two times
+    return estimatedStartTime > minimumStartTime ? estimatedStartTime : minimumStartTime;
+  } else {
+    return minimumStartTime;
+  }
 }
 
 // Format time remaining until a date
