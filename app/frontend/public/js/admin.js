@@ -902,6 +902,9 @@ document.addEventListener('DOMContentLoaded', () => {
     loadSettings();
   }
 
+  // Add event listener for save settings button
+  document.getElementById('save-settings-btn').addEventListener('click', saveSettings);
+
   async function loadSettings() {
     try {
       const response = await fetch('/api/settings');
@@ -913,6 +916,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('display-matches-count').value = settings.display_matches_count || 4;
       document.getElementById('match-length-minutes').value = settings.match_length_minutes || 15;
       document.getElementById('break-length-minutes').value = settings.break_length_minutes || 5;
+      document.getElementById('max-players-per-round').value = settings.max_players_per_round || 0;
     } catch (error) {
       console.error('Error loading settings:', error);
       alert('Fehler beim Laden der Einstellungen');
@@ -923,7 +927,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const settings = {
       display_matches_count: parseInt(document.getElementById('display-matches-count').value),
       match_length_minutes: parseInt(document.getElementById('match-length-minutes').value),
-      break_length_minutes: parseInt(document.getElementById('break-length-minutes').value)
+      break_length_minutes: parseInt(document.getElementById('break-length-minutes').value),
+      max_players_per_round: parseInt(document.getElementById('max-players-per-round').value)
     };
 
     try {

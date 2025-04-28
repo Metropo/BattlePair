@@ -32,7 +32,8 @@ db.run(`
 const DEFAULT_SETTINGS = {
     display_matches_count: 4,
     match_length_minutes: 15,
-    break_length_minutes: 5
+    break_length_minutes: 5,
+    max_players_per_round: 0
 };
 
 // Get all settings

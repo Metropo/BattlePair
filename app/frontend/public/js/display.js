@@ -5,7 +5,8 @@ document.addEventListener('DOMContentLoaded', () => {
     participants: [],
     gameModes: [],
     settings: {
-      display_matches_count: 4 // Default value
+      display_matches_count: 4, // Default value
+      max_players_per_round: 0 // Default value
     }
   };
 
@@ -46,7 +47,8 @@ document.addEventListener('DOMContentLoaded', () => {
     card.innerHTML = '';
     
     // Add next-match class if this is the next match
-    if (isNextMatch(match, allMatches)) {
+    const isNextMatchFlag = isNextMatch(match, allMatches);
+    if (isNextMatchFlag) {
       card.classList.add('next-match');
     } else {
       card.classList.remove('next-match');
@@ -123,7 +125,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const infoContainer = document.createElement('div');
     infoContainer.classList.add('match-info');
-    infoContainer.textContent = `${totalPersons} Spieler`;
+    let playerCountText = `${totalPersons} Spieler`;
+    if (lastState.settings.max_players_per_round > 0) {
+      const availableSpots = lastState.settings.max_players_per_round - match.participants.length;
+      playerCountText += ` (noch ${availableSpots} Plätze frei)`;
+    }
+    infoContainer.textContent = playerCountText;
     card.appendChild(infoContainer);
   }
 
@@ -161,7 +168,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Create new card if it doesn't exist
     const matchCard = document.createElement('div');
-    matchCard.classList.add('match-card');
+    const isNextMatchFlag = isNextMatch(match, allMatches);
+    matchCard.className = `match-card ${isNextMatchFlag ? 'next-match' : ''}`;
     matchCard.setAttribute('data-match-id', match.id);
     matchCard.style.opacity = '0';
     matchCard.style.transition = 'opacity 0.3s ease-in-out';
