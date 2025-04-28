@@ -29,7 +29,7 @@ db.run(`
 
 // Get matches with optional filtering and limiting
 exports.getMatches = (req, res) => {
-  const { is_started, limit } = req.query;
+  const { is_started, limit, sort } = req.query;
   let query = 'SELECT * FROM matches';
   const params = [];
 
@@ -38,7 +38,12 @@ exports.getMatches = (req, res) => {
     params.push(is_started);
   }
 
-  query += ' ORDER BY created_at DESC';
+  // Add sorting based on the sort parameter
+  if (sort === 'asc') {
+    query += ' ORDER BY id ASC';
+  } else {
+    query += ' ORDER BY id DESC'; // Default to descending order
+  }
 
   if (limit) {
     query += ' LIMIT ?';
@@ -154,7 +159,7 @@ exports.startMatch = (req, res) => {
   db.run(`
     UPDATE matches 
     SET is_started = 1, 
-        started_at = CURRENT_TIMESTAMP 
+        started_at = datetime('now')
     WHERE id = ?
   `, [id], function(err) {
     if (err) {
@@ -203,4 +208,34 @@ exports.deleteMatch = (req, res) => {
     res.json({ message: 'Match gelöscht' });
     }
   );
+};
+
+// Get the start time of the last match
+exports.getLastMatchStartTime = (req, res) => {
+  db.get(`
+    SELECT started_at 
+    FROM matches 
+    WHERE is_started = 1 
+    ORDER BY started_at DESC 
+    LIMIT 1
+  `, [], (err, row) => {
+    if (err) {
+      console.error('Fehler beim Abrufen der Startzeit des letzten Matches:', err);
+      return res.status(500).json({ error: 'Fehler beim Abrufen der Startzeit des letzten Matches' });
+    }
+    // Add 'Z' to indicate UTC timezone
+    const started_at = row ? row.started_at + 'Z' : null;
+    res.json({ started_at });
+  });
+};
+
+// Delete all matches from the database
+exports.deleteAllMatches = (req, res) => {
+  db.run(`DELETE FROM matches`, [], function(err) {
+    if (err) {
+      console.error('Fehler beim Löschen aller Matches:', err);
+      return res.status(500).json({ error: 'Fehler beim Löschen aller Matches' });
+    }
+    res.json({ message: 'Alle Matches wurden gelöscht' });
+  });
 };

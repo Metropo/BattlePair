@@ -5,6 +5,9 @@ const matchController = require('../controllers/matchController');
 // GET: Alle Matches abrufen
 router.get('/', matchController.getMatches);
 
+// GET: Startzeit des letzten Matches abrufen
+router.get('/last-start-time', matchController.getLastMatchStartTime);
+
 // GET: Match-Statistiken für einen Teilnehmer
 router.get('/stats/:participantType/:participantId', matchController.getParticipantMatchStats);
 
@@ -23,4 +26,9 @@ router.put('/unstart', matchController.unstartMatch);
 // DELETE: Match löschen
 router.delete('/', matchController.deleteMatch);
 
+// DELETE: Alle Matches löschen
+router.delete('/all', matchController.deleteAllMatches);
+
 module.exports = router;
+
+

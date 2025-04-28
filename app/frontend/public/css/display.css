@@ -119,7 +119,7 @@ main {
 }
 
 .participant-main {
-    font-size: 1.4rem;
+    font-size: 1.2rem;
     font-weight: bold;
     transition: color 0.2s ease-in-out;
 }
@@ -134,7 +134,7 @@ main {
 /* Anzeige der Gesamtpersonenanzahl */
 .match-info {
     font-weight: bold;
-    font-size: 1.4rem;
+    font-size: 1.2rem;
     color: #fff;
     text-align: right;
     margin-top: 10px;
@@ -206,5 +206,94 @@ main {
     .match-info {
         font-size: 1.2rem;
     }
+}
+
+
+
+/*.next-match .match-time {
+  background-color: rgba(255, 255, 0, 0.2);
+  font-weight: bold;
+}*/
+
+.match-id {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  font-size: 0.8rem;
+  color: #666;
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 2px 5px;
+  border-radius: 3px;
+}
+
+/* Show match IDs when debugging */
+body.debug .match-id {
+  display: block !important;
+}
+
+/* Info container for time and player count */
+.match-info-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  padding: 5px 10px;
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+/*.match-time {
+    margin-top: 10px;
+    padding: 5px 10px;
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    font-size: 0.9rem;
+    text-align: center;
+  }*/
+
+.match-time {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.match-player-count {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.next-match .match-info-container {
+  background-color: rgba(77, 166, 255, 0.1);
+}
+
+.next-match .match-time,
+.next-match .match-player-count {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #4da6ff;
+  text-shadow: 0 0 10px rgba(77, 166, 255, 0.3);
+}
+
+.delete-all-button {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-bottom: 20px;
+    transition: background-color 0.3s;
+}
+
+.delete-all-button:hover {
+    background-color: #c82333;
+}
+
+.delete-all-button:active {
+    background-color: #bd2130;
 }
   

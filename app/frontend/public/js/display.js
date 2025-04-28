@@ -42,9 +42,16 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Helper function to build match card content
-  function buildMatchCardContent(card, match, globalParticipants, gameModes, allMatches) {
+  async function buildMatchCardContent(card, match, globalParticipants, gameModes, allMatches, estimatedStartTime) {
     // Clear existing content
     card.innerHTML = '';
+    
+    // Add match ID as hidden element
+    const matchIdElement = document.createElement('div');
+    matchIdElement.classList.add('match-id');
+    matchIdElement.textContent = `Match #${match.id}`;
+    matchIdElement.style.display = 'none'; // Hidden by default
+    card.appendChild(matchIdElement);
     
     // Add next-match class if this is the next match
     const isNextMatchFlag = isNextMatch(match, allMatches);
@@ -117,52 +124,80 @@ document.addEventListener('DOMContentLoaded', () => {
 
     card.appendChild(participantsContainer);
 
-    // Player count section
-    let totalPersons = match.participants.reduce((sum, p) => {
-      const participant = globalParticipants.find(tp => tp.type === p.type && tp.id == p.id);
-      return sum + (participant ? participant.player_count : 0);
-    }, 0);
-
+    // Info container for time and player count
     const infoContainer = document.createElement('div');
-    infoContainer.classList.add('match-info');
-    let playerCountText = `${totalPersons} Spieler`;
+    infoContainer.classList.add('match-info-container');
+
+    // Time remaining section
+    if (estimatedStartTime) {
+      const timeRemaining = common.formatTimeRemaining(estimatedStartTime);
+      if (timeRemaining) {
+        const timeContainer = document.createElement('div');
+        timeContainer.classList.add('match-time');
+        timeContainer.textContent = timeRemaining === "Match startet in Kürze" 
+          ? timeRemaining 
+          : `Start in ca. ${timeRemaining}`;
+        infoContainer.appendChild(timeContainer);
+      }
+    }
+
+    // Player count section
+    const totalPlayers = common.calculateTotalPlayers(match, globalParticipants);
+    const playerCountContainer = document.createElement('div');
+    playerCountContainer.classList.add('match-player-count');
+    let playerCountText = `${totalPlayers} Spieler`;
     if (lastState.settings.max_players_per_round > 0) {
       const availableSpots = lastState.settings.max_players_per_round - match.participants.length;
       playerCountText += ` (noch ${availableSpots} Plätze frei)`;
     }
-    infoContainer.textContent = playerCountText;
+    playerCountContainer.textContent = playerCountText;
+    infoContainer.appendChild(playerCountContainer);
+
     card.appendChild(infoContainer);
   }
 
   // Helper function to update a single match card
-  function updateMatchCard(match, globalParticipants, gameModes, allMatches) {
+  async function updateMatchCard(match, globalParticipants, gameModes, allMatches, lastMatchStartTime) {
     const matchKey = getMatchKey(match);
     const existingCard = document.querySelector(`[data-match-id="${match.id}"]`);
     
     if (existingCard) {
       // Check if the match has actually changed
       const oldMatch = lastState.matches.find(m => m.id === match.id);
-      if (!hasMatchChanged(oldMatch, match)) {
-        // Still need to check if this should be the next match
-        const shouldBeNext = isNextMatch(match, allMatches);
-        const isCurrentlyNext = existingCard.classList.contains('next-match');
-        if (shouldBeNext !== isCurrentlyNext) {
-          if (shouldBeNext) {
-            existingCard.classList.add('next-match');
-          } else {
-            existingCard.classList.remove('next-match');
-          }
+      const hasChanged = hasMatchChanged(oldMatch, match);
+      
+      // Still need to check if this should be the next match
+      const shouldBeNext = isNextMatch(match, allMatches);
+      const isCurrentlyNext = existingCard.classList.contains('next-match');
+      if (shouldBeNext !== isCurrentlyNext) {
+        if (shouldBeNext) {
+          existingCard.classList.add('next-match');
+        } else {
+          existingCard.classList.remove('next-match');
         }
-        return; // No other changes needed
       }
 
-      // Update existing card content
-      existingCard.style.opacity = '0';
-      buildMatchCardContent(existingCard, match, globalParticipants, gameModes, allMatches);
-      
-      // Trigger reflow and fade in
-      existingCard.offsetHeight;
-      existingCard.style.opacity = '1';
+      // Always update the time, even if nothing else changed
+      const estimatedStartTime = common.calculateEstimatedStartTime(match, allMatches, lastState.settings, lastMatchStartTime);
+      const timeContainer = existingCard.querySelector('.match-time');
+      if (timeContainer) {
+        const timeRemaining = common.formatTimeRemaining(estimatedStartTime);
+        if (timeRemaining) {
+          timeContainer.textContent = timeRemaining === "Match startet in Kürze" 
+            ? timeRemaining 
+            : `Start in ca. ${timeRemaining}`;
+        }
+      }
+
+      // Only rebuild the entire card if the match data has changed
+      if (hasChanged) {
+        existingCard.style.opacity = '0';
+        await buildMatchCardContent(existingCard, match, globalParticipants, gameModes, allMatches, estimatedStartTime);
+        
+        // Trigger reflow and fade in
+        existingCard.offsetHeight;
+        existingCard.style.opacity = '1';
+      }
       return;
     }
 
@@ -175,7 +210,8 @@ document.addEventListener('DOMContentLoaded', () => {
     matchCard.style.transition = 'opacity 0.3s ease-in-out';
 
     // Build the card content
-    buildMatchCardContent(matchCard, match, globalParticipants, gameModes, allMatches);
+    const estimatedStartTime = common.calculateEstimatedStartTime(match, allMatches, lastState.settings, lastMatchStartTime);
+    await buildMatchCardContent(matchCard, match, globalParticipants, gameModes, allMatches, estimatedStartTime);
 
     const container = document.getElementById('matches-container');
     container.appendChild(matchCard);
@@ -185,57 +221,21 @@ document.addEventListener('DOMContentLoaded', () => {
     matchCard.style.opacity = '1';
   }
 
-  // Load global participants
-  function loadGlobalParticipants() {
-    return Promise.all([
-      fetch('/api/tables').then(res => res.json()),
-      fetch('/api/walkins').then(res => res.json())
-    ]).then(([tables, walkins]) => {
-      const tableParticipants = tables.map(t => ({
-        type: 'table',
-        id: t.id,
-        name: t.name,
-        displayMain: t.temp_name ? t.temp_name : t.name,
-        displaySub: t.temp_name ? t.name : '',
-        player_count: parseInt(t.player_count) || 0
-      }));
-      const walkinParticipants = walkins.map(w => ({
-        type: 'walkin',
-        id: w.id,
-        name: w.name,
-        displayMain: w.name,
-        displaySub: '',
-        player_count: 1
-      }));
-      return [...tableParticipants, ...walkinParticipants];
-    });
-  }
-
-  // Load game modes
-  function loadGameModes() {
-    return fetch('/api/gamemodes')
-      .then(res => res.json())
-      .catch(err => {
-        console.error('Fehler beim Laden der Spielmodi:', err);
-        return [];
-      });
-  }
-
   // Load and update matches
   async function loadMatches() {
     try {
-      const [matchesResponse, settingsResponse] = await Promise.all([
-        fetch('/api/matches'),
-        fetch('/api/settings')
+      const [matchesResponse, settingsResponse, lastStartTimeResponse] = await Promise.all([
+        fetch('/api/matches?is_started=0&sort=asc'),
+        fetch('/api/settings'),
+        fetch('/api/matches/last-start-time')
       ]);
       
       const matches = await matchesResponse.json();
       const settings = await settingsResponse.json();
+      const { started_at: lastMatchStartTime } = await lastStartTimeResponse.json();
       
       lastState.settings = settings;
-      const pendingMatches = matches
-        .filter(match => match.is_started == 0)
-        .sort((a, b) => a.id - b.id); // Sort matches by ID in ascending order
+      const pendingMatches = matches;
       const container = document.getElementById('matches-container');
 
       if (pendingMatches.length === 0) {
@@ -248,42 +248,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Load participants and game modes
       const [globalParticipants, gameModes] = await Promise.all([
-        loadGlobalParticipants(),
-        loadGameModes()
+        common.loadGlobalParticipants(),
+        common.loadGameModes()
       ]);
 
-      // Remove matches that no longer exist
-      const existingMatchIds = new Set(pendingMatches.map(m => m.id));
-      document.querySelectorAll('.match-card').forEach(card => {
+      // Update or create match cards
+      pendingMatches.forEach(match => {
+        updateMatchCard(match, globalParticipants, gameModes, pendingMatches, lastMatchStartTime);
+      });
+
+      // Update last state
+      lastState.matches = pendingMatches;
+      lastState.participants = globalParticipants;
+      lastState.gameModes = gameModes;
+      
+      // Remove any cards that no longer exist
+      const existingCards = document.querySelectorAll('.match-card');
+      existingCards.forEach(card => {
         const matchId = parseInt(card.getAttribute('data-match-id'));
-        if (!existingMatchIds.has(matchId)) {
+        if (!pendingMatches.some(match => match.id === matchId)) {
           card.style.opacity = '0';
           setTimeout(() => card.remove(), 300);
         }
       });
-
-      // Update or add matches (limited by display_matches_count)
-      const matchesToDisplay = pendingMatches.slice(0, settings.display_matches_count);
-      matchesToDisplay.forEach(match => {
-        updateMatchCard(match, globalParticipants, gameModes, matchesToDisplay);
-      });
-
-      // Update last state
-      lastState = {
-        matches: pendingMatches,
-        participants: globalParticipants,
-        gameModes: gameModes,
-        settings: settings
-      };
-    } catch (err) {
-      console.error('Fehler beim Laden der Matches:', err);
+    } catch (error) {
+      console.error('Error loading matches:', error);
     }
   }
 
-  // Initial load and periodic updates
-  loadSettings().then(() => {
+  // Initial load
+  loadSettings();
+  loadMatches();
+
+  // Set up polling
+  setInterval(() => {
     loadMatches();
-    setInterval(loadMatches, 10000);
-  });
+  }, 5000); // Poll every 5 seconds
 });
   

@@ -337,19 +337,29 @@ document.addEventListener('DOMContentLoaded', () => {
   // ---------------------------
   // Hier können Matches angelegt, bearbeitet und (über Dropdown) mit einem Spielmodus versehen werden.
   function loadMatches() {
-    fetch('/api/matches')
-      .then(res => res.json())
-      .then(matches => {
+    // Use the same improved query as in display.js
+    Promise.all([
+      fetch('/api/matches?is_started=0&sort=asc'),
+      fetch('/api/settings'),
+      fetch('/api/matches/last-start-time')
+    ])
+      .then(([matchesResponse, settingsResponse, lastStartTimeResponse]) => 
+        Promise.all([
+          matchesResponse.json(),
+          settingsResponse.json(),
+          lastStartTimeResponse.json()
+        ])
+      )
+      .then(([matches, settings, { started_at: lastMatchStartTime }]) => {
         loadGlobalParticipants().then(globalParticipants => {
           loadGameModes().then(gameModes => {
-          // Nur noch nicht gestartete Matches anzeigen
-          const pendingMatches = matches.filter(m => m.is_started == 0);
-          const matchesContainer = document.getElementById('matches-container');
-          matchesContainer.innerHTML = '';
-          pendingMatches.forEach(match => {
-            const matchRow = document.createElement('div');
-            matchRow.classList.add('match-row');
-            matchRow.dataset.matchId = match.id;
+            const pendingMatches = matches; // No need to sort here as backend handles it
+            const matchesContainer = document.getElementById('matches-container');
+            matchesContainer.innerHTML = '';
+            pendingMatches.forEach(match => {
+              const matchRow = document.createElement('div');
+              matchRow.classList.add('match-row');
+              matchRow.dataset.matchId = match.id;
 
               // Dropdown für Spielmodus
               const gameModeSelect = document.createElement('select');
@@ -369,63 +379,62 @@ document.addEventListener('DOMContentLoaded', () => {
               matchRow.appendChild(gameModeSelect);
               
               // Container mit Rahmen für die Teilnehmer-Boxen
-            const participantsContainer = document.createElement('div');
-            participantsContainer.classList.add('match-participants');
-            globalParticipants.forEach(participant => {
-              const partElem = document.createElement('span');
-              partElem.classList.add('participant');
-              partElem.textContent = participant.display;
-              // Falls Teilnehmer bereits im Match ist, farblich markieren
-              if (match.participants.some(p => p.type === participant.type && p.id == participant.id)) {
-                partElem.classList.add('selected');
-              }
-              // Klick-Event: Toggle Teilnehmer im Match
-              partElem.addEventListener('click', () => {
-                let newParticipants = match.participants.slice();
-                const idx = newParticipants.findIndex(p => p.type === participant.type && p.id == participant.id);
-                if (idx > -1) {
-                  newParticipants.splice(idx, 1);
-                } else {
-                  newParticipants.push({
-                    type: participant.type,
-                    id: participant.id,
-                    name: participant.name
-                  });
+              const participantsContainer = document.createElement('div');
+              participantsContainer.classList.add('match-participants');
+              globalParticipants.forEach(participant => {
+                const partElem = document.createElement('span');
+                partElem.classList.add('participant');
+                partElem.textContent = participant.display;
+                // Falls Teilnehmer bereits im Match ist, farblich markieren
+                if (match.participants.some(p => p.type === participant.type && p.id == participant.id)) {
+                  partElem.classList.add('selected');
                 }
-                updateMatch(match.id, newParticipants, match.game_mode_id);
+                // Klick-Event: Toggle Teilnehmer im Match
+                partElem.addEventListener('click', () => {
+                  let newParticipants = match.participants.slice();
+                  const idx = newParticipants.findIndex(p => p.type === participant.type && p.id == participant.id);
+                  if (idx > -1) {
+                    newParticipants.splice(idx, 1);
+                  } else {
+                    newParticipants.push({
+                      type: participant.type,
+                      id: participant.id,
+                      name: participant.name
+                    });
+                  }
+                  updateMatch(match.id, newParticipants, match.game_mode_id);
+                });
+                participantsContainer.appendChild(partElem);
               });
-              participantsContainer.appendChild(partElem);
-            });
 
-            // Berechne Gesamtpersonenanzahl basierend auf Teilnehmern:
-            let totalPersons = 0;
-            match.participants.forEach(p => {
-              if (p.type === 'table') {
-                const tbl = globalParticipants.find(tp => tp.type === 'table' && tp.id == p.id);
-                totalPersons += tbl ? tbl.player_count : 0;
-              } else if (p.type === 'walkin') {
-                totalPersons += 1;
-              }
-            });
-            const infoContainer = document.createElement('div');
-            infoContainer.classList.add('match-info');
-            infoContainer.textContent = `Personen: ${totalPersons}`;
-            
-            // Löschen-Button für das Match
-            const deleteBtn = document.createElement('button');
-            deleteBtn.textContent = 'Löschen';
-            deleteBtn.addEventListener('click', () => deleteMatch(match.id));
+              // Berechne Gesamtpersonenanzahl basierend auf Teilnehmern:
+              let totalPersons = 0;
+              match.participants.forEach(p => {
+                if (p.type === 'table') {
+                  const tbl = globalParticipants.find(tp => tp.type === 'table' && tp.id == p.id);
+                  totalPersons += tbl ? tbl.player_count : 0;
+                } else if (p.type === 'walkin') {
+                  totalPersons += 1;
+                }
+              });
+              const infoContainer = document.createElement('div');
+              infoContainer.classList.add('match-info');
+              infoContainer.textContent = `Personen: ${totalPersons}`;
+              
+              // Löschen-Button für das Match
+              const deleteBtn = document.createElement('button');
+              deleteBtn.textContent = 'Löschen';
+              deleteBtn.addEventListener('click', () => deleteMatch(match.id));
 
-            matchRow.appendChild(participantsContainer);
-            matchRow.appendChild(infoContainer);
-            matchRow.appendChild(deleteBtn);
-            matchesContainer.appendChild(matchRow);
+              matchRow.appendChild(participantsContainer);
+              matchRow.appendChild(infoContainer);
+              matchRow.appendChild(deleteBtn);
+              matchesContainer.appendChild(matchRow);
+            });
           });
         });
       })
-      .catch(err => console.error('Fehler beim Laden der Participants:', err));
-    })
-    .catch(err => console.error('Fehler beim Laden der Matches:', err));
+      .catch(err => console.error('Fehler beim Laden der Matches:', err));
   }
 
   function createEmptyMatch() {
@@ -526,15 +535,14 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function startFirstMatch() {
-    fetch('/api/matches')
+    fetch('/api/matches?is_started=0&limit=1&sort=asc')
       .then(res => res.json())
       .then(matches => {
-        const pendingMatches = matches.filter(m => m.is_started == 0);
-        if (pendingMatches.length === 0) {
+        if (matches.length === 0) {
           alert('Kein Match zum Starten vorhanden.');
           return;
         }
-        const firstMatch = pendingMatches[0];
+        const firstMatch = matches[0];
         startMatch(firstMatch.id);
       })
       .catch(err => console.error(err));
@@ -744,12 +752,21 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const [matches, globalParticipants, gameModes] = await Promise.all([
         fetch('/api/matches?is_started=1&limit=10').then(res => res.json()),
-        loadGlobalParticipants(),
-        loadGameModes()
+        common.loadGlobalParticipants(),
+        common.loadGameModes()
       ]);
 
       const historyContainer = document.getElementById('history-container');
       historyContainer.innerHTML = '';
+
+      // Add delete all button if there are matches
+      if (matches.length > 0) {
+        const deleteAllButton = document.createElement('button');
+        deleteAllButton.className = 'delete-all-button';
+        deleteAllButton.textContent = 'Alle Matches löschen';
+        deleteAllButton.onclick = deleteAllMatches;
+        historyContainer.appendChild(deleteAllButton);
+      }
 
       if (matches.length === 0) {
         historyContainer.innerHTML = '<p>Keine Matches in der Historie.</p>';
@@ -761,31 +778,12 @@ document.addEventListener('DOMContentLoaded', () => {
         matchCard.className = 'history-card';
         matchCard.dataset.matchId = match.id;
 
-        // Format the start time
-        const startTime = new Date(match.started_at);
-        const formattedTime = startTime.toLocaleString('de-DE', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        });
-
-        // Get game mode name
-        const gameMode = gameModes.find(gm => gm.id === match.game_mode_id);
-        const gameModeName = gameMode ? gameMode.name : 'Kein Spielmodus';
-
-        // Calculate total players
-        const totalPlayers = match.participants.reduce((sum, p) => {
-          const participant = globalParticipants.find(tp => tp.type === p.type && tp.id == p.id);
-          return sum + (participant ? participant.player_count : 0);
-        }, 0);
-
-        // Create participant list
-        const participantList = match.participants.map(p => {
-          const participant = globalParticipants.find(tp => tp.type === p.type && tp.id == p.id);
-          return participant ? participant.display : p.name;
-        }).join(', ');
+        // Convert UTC time to local time
+        const utcDate = new Date(match.started_at + 'Z'); // Add 'Z' to indicate UTC
+        const formattedTime = common.formatDate(utcDate);
+        const gameModeName = common.getGameModeName(match, gameModes);
+        const totalPlayers = common.calculateTotalPlayers(match, globalParticipants);
+        const participantList = common.createParticipantList(match, globalParticipants);
 
         matchCard.innerHTML = `
           <div class="history-card-header">
@@ -810,6 +808,29 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       console.error('Fehler beim Laden der Historie:', err);
       alert('Fehler beim Laden der Historie');
+    }
+  }
+
+  async function deleteAllMatches() {
+    if (!confirm('Sind Sie sicher, dass Sie ALLE Matches löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/matches/all', {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) {
+        throw new Error('Fehler beim Löschen der Matches');
+      }
+
+      alert('Alle Matches wurden erfolgreich gelöscht');
+      loadHistory();
+      loadMatches();
+    } catch (error) {
+      console.error('Fehler beim Löschen der Matches:', error);
+      alert('Fehler beim Löschen der Matches');
     }
   }
 
@@ -1052,5 +1073,35 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Error saving settings:', error);
       alert('Fehler beim Speichern der Einstellungen');
     }
+  }
+
+  // Helper function to build match card content
+  function buildMatchCardContent(card, match, globalParticipants, gameModes) {
+    // Clear existing content
+    card.innerHTML = '';
+
+    // Add match ID as hidden element
+    const matchIdElement = document.createElement('div');
+    matchIdElement.classList.add('match-id');
+    matchIdElement.textContent = `Match #${match.id}`;
+    matchIdElement.style.display = 'none'; // Hidden by default
+    card.appendChild(matchIdElement);
+
+    // ... rest of the existing code ...
+  }
+
+  // Helper function to build history card content
+  function buildHistoryCardContent(card, match, globalParticipants, gameModes) {
+    // Clear existing content
+    card.innerHTML = '';
+
+    // Add match ID as hidden element
+    const matchIdElement = document.createElement('div');
+    matchIdElement.classList.add('match-id');
+    matchIdElement.textContent = `Match #${match.id}`;
+    matchIdElement.style.display = 'none'; // Hidden by default
+    card.appendChild(matchIdElement);
+
+    // ... rest of the existing code ...
   }
 });
