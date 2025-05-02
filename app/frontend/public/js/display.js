@@ -239,12 +239,16 @@ document.addEventListener('DOMContentLoaded', () => {
       const container = document.getElementById('matches-container');
 
       if (pendingMatches.length === 0) {
-        if (container.children.length === 0 || 
-            (container.children.length === 1 && container.children[0].tagName === 'P')) {
-          container.innerHTML = '<p style="font-size:1.5rem; text-align:center;">Derzeit sind keine Matches verfügbar.</p>';
-        }
+        // Remove any existing match cards
+        const existingCards = container.querySelectorAll('.match-card');
+        existingCards.forEach(card => card.remove());
+        // Add empty state class to show no-matches message
+        container.classList.add('empty');
         return;
       }
+
+      // Remove empty state to show match cards
+      container.classList.remove('empty');
 
       // Load participants and game modes
       const [globalParticipants, gameModes] = await Promise.all([
