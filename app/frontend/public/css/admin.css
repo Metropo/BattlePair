@@ -826,9 +826,9 @@ button:hover {
 input[type="text"],
 input[type="number"],
 select {
-  width: 100%;
+  width: calc(100% - var(--spacing-md));
   padding: var(--spacing-sm);
-  margin-bottom: var(--spacing-md);
+  margin: 0 var(--spacing-md) var(--spacing-md) 0;
   background-color: var(--background-dark);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
