@@ -1082,4 +1082,77 @@ button:hover {
 
 .table-card.has-temp-settings input {
     border-color: #4da6ff;
+}
+
+/* Image Settings */
+.image-settings {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    padding: 20px;
+}
+
+.image-group {
+    background-color: var(--background-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.image-group h4 {
+    margin: 0 0 15px 0;
+    color: var(--text-light);
+}
+
+.image-preview {
+    width: 100%;
+    height: 200px;
+    margin-bottom: 15px;
+    border: 2px dashed var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--background-darker);
+}
+
+.image-preview img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.image-group input[type="file"] {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 8px;
+    background-color: var(--background-darker);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-light);
+}
+
+.image-group button {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 8px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.image-group button:hover {
+    background-color: var(--primary-color-dark);
+}
+
+.image-group button.delete-btn {
+    background-color: var(--danger-color);
+}
+
+.image-group button.delete-btn:hover {
+    background-color: var(--danger-color-dark);
 } 

@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function loadTables() {
     const tablesContainer = document.getElementById('tables-container');
     tablesContainer.innerHTML = ''; // Clear the container before loading
-    
+
     fetch('/api/tables')
       .then(res => res.json())
       .then(tables => {
@@ -53,10 +53,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
               // Function to check for changes
               const checkForChanges = () => {
-                const hasChanges = 
+                const hasChanges =
                   tempTempNameInput.value !== originalValues.tempName ||
                   parseInt(playerCountInput.value) !== parseInt(originalValues.playerCount);
-                
+
                 saveButton.classList.toggle('has-changes', hasChanges);
               };
 
@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const tempName = tempTempNameInput.value || null;
                 const playerCount = playerCountInput.value;
                 updateTable(id, undefined, tempName, playerCount);
-                
+
                 // Update original values after save
                 originalValues.tempName = tempName || '';
                 originalValues.playerCount = playerCount;
@@ -94,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
               // Save on button click
               saveButton.addEventListener('click', saveChanges);
-              
+
               // Reset on button click
               resetButton.addEventListener('click', resetTable);
 
@@ -115,12 +115,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const card = document.createElement('div');
     card.className = 'table-card';
     card.dataset.tableId = table.id;
-    
+
     // Add has-temp-settings class if table has temporary settings
     if (table.temp_name || (table.player_count && table.player_count > 0)) {
-        card.classList.add('has-temp-settings');
+      card.classList.add('has-temp-settings');
     }
-    
+
     card.innerHTML = `
       <h3>${table.name}</h3>
       <label for="table-temp-name-${table.id}">Temporärer Name:</label>
@@ -178,7 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(walkins => {
         const walkinList = document.getElementById('walkin-list');
         walkinList.innerHTML = '';
-        
+
         // Load match stats for all walkins
         const walkinPromises = walkins.map(async walkin => {
           const matchCounts = await countParticipantMatches(walkin.id, 'walkin');
@@ -209,14 +209,14 @@ document.addEventListener('DOMContentLoaded', () => {
               `;
               const deleteBtn = li.querySelector('.delete-walkin-btn');
               deleteBtn.addEventListener('click', () => deleteWalkin(walkin.id));
-              
+
               const resetCounterBtn = li.querySelector('.reset-counter-btn');
               resetCounterBtn.addEventListener('click', () => {
                 if (confirm('Möchten Sie den Match-Zähler für diese Laufkundschaft zurücksetzen?')) {
                   resetMatchCounter(walkin.id, 'walkin');
                 }
               });
-              
+
               walkinList.appendChild(li);
             });
           });
@@ -349,7 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
       fetch('/api/settings'),
       fetch('/api/matches/last-start-time')
     ])
-      .then(([matchesResponse, settingsResponse, lastStartTimeResponse]) => 
+      .then(([matchesResponse, settingsResponse, lastStartTimeResponse]) =>
         Promise.all([
           matchesResponse.json(),
           settingsResponse.json(),
@@ -383,7 +383,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateMatch(match.id, match.participants, newGameModeId);
               });
               matchRow.appendChild(gameModeSelect);
-              
+
               // Container mit Rahmen für die Teilnehmer-Boxen
               const participantsContainer = document.createElement('div');
               participantsContainer.classList.add('match-participants');
@@ -426,7 +426,7 @@ document.addEventListener('DOMContentLoaded', () => {
               const infoContainer = document.createElement('div');
               infoContainer.classList.add('match-info');
               infoContainer.textContent = `Personen: ${totalPersons}`;
-              
+
               // Löschen-Button für das Match
               const deleteBtn = document.createElement('button');
               deleteBtn.textContent = 'Löschen';
@@ -641,66 +641,66 @@ document.addEventListener('DOMContentLoaded', () => {
         modes.forEach(mode => {
           const li = document.createElement('li');
           li.dataset.id = mode.id;
-          
+
           // Create edit form
           const editForm = document.createElement('form');
           editForm.classList.add('gamemode-edit-form');
           editForm.style.display = 'none';
-          
+
           const nameInput = document.createElement('input');
           nameInput.type = 'text';
           nameInput.value = mode.name;
           nameInput.placeholder = 'Name';
-          
+
           const descInput = document.createElement('input');
           descInput.type = 'text';
           descInput.value = mode.description || '';
           descInput.placeholder = 'Beschreibung';
-          
+
           const iconInput = document.createElement('input');
           iconInput.type = 'text';
           iconInput.value = mode.icon || '';
           iconInput.placeholder = 'Icon URL';
-          
+
           const saveBtn = document.createElement('button');
           saveBtn.type = 'submit';
           saveBtn.textContent = 'Speichern';
-          
+
           const cancelBtn = document.createElement('button');
           cancelBtn.type = 'button';
           cancelBtn.textContent = 'Abbrechen';
-          
+
           editForm.appendChild(nameInput);
           editForm.appendChild(descInput);
           editForm.appendChild(iconInput);
           editForm.appendChild(saveBtn);
           editForm.appendChild(cancelBtn);
-          
+
           // Create display div
           const displayDiv = document.createElement('div');
           displayDiv.classList.add('gamemode-display');
           displayDiv.innerHTML = `<strong>${mode.name}</strong> – ${mode.description || ''}`;
-          
+
           // Create buttons
           const editBtn = document.createElement('button');
           editBtn.textContent = 'Bearbeiten';
           editBtn.style.marginLeft = '10px';
-          
+
           const deleteBtn = document.createElement('button');
           deleteBtn.textContent = 'Löschen';
           deleteBtn.style.marginLeft = '10px';
-          
+
           // Add event listeners
           editBtn.addEventListener('click', () => {
             displayDiv.style.display = 'none';
             editForm.style.display = 'block';
           });
-          
+
           cancelBtn.addEventListener('click', () => {
             displayDiv.style.display = 'block';
             editForm.style.display = 'none';
           });
-          
+
           editForm.addEventListener('submit', (e) => {
             e.preventDefault();
             updateGameMode(
@@ -710,9 +710,9 @@ document.addEventListener('DOMContentLoaded', () => {
               iconInput.value.trim()
             );
           });
-          
+
           deleteBtn.addEventListener('click', () => deleteGameMode(mode.id));
-          
+
           // Append elements
           displayDiv.appendChild(editBtn);
           displayDiv.appendChild(deleteBtn);
@@ -908,7 +908,7 @@ document.addEventListener('DOMContentLoaded', () => {
           alert(data.error);
           return;
         }
-        
+
         // Create download link
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -919,7 +919,7 @@ document.addEventListener('DOMContentLoaded', () => {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        
+
         alert('Backup erfolgreich erstellt');
       })
       .catch(err => {
@@ -931,7 +931,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function restoreBackup() {
     const fileInput = document.getElementById('backup-file');
     const file = fileInput.files[0];
-    
+
     if (!file) {
       alert('Bitte wählen Sie eine Backup-Datei aus');
       return;
@@ -942,10 +942,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = function (e) {
       try {
         const backupData = JSON.parse(e.target.result);
-        
+
         fetch('/api/backup/restore', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1041,9 +1041,9 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const response = await fetch('/api/settings');
       if (!response.ok) throw new Error('Failed to load settings');
-      
+
       const settings = await response.json();
-      
+
       // Update input fields with current settings
       document.getElementById('display-matches-count').value = settings.display_matches_count || 4;
       document.getElementById('match-length-minutes').value = settings.match_length_minutes || 15;
@@ -1073,7 +1073,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       if (!response.ok) throw new Error('Failed to save settings');
-      
+
       alert('Einstellungen erfolgreich gespeichert');
     } catch (error) {
       console.error('Error saving settings:', error);
@@ -1110,4 +1110,89 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ... rest of the existing code ...
   }
+
+  // Image Management
+  function handleImageUpload(file, imageName) {
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async function (e) {
+      try {
+        const response = await fetch(`/api/images/${imageName}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            data: e.target.result, //.split(',')[1]
+            mime_type: file.type
+          })
+        });
+
+        if (!response.ok) throw new Error('Failed to upload image');
+
+        // Refresh the image preview
+        const previewImg = document.querySelector(`#${imageName}-preview img`);
+        previewImg.src = `/api/images/${imageName}?t=${new Date().getTime()}`;
+
+        alert('Bild erfolgreich hochgeladen');
+      } catch (error) {
+        console.error('Error uploading image:', error);
+        alert('Fehler beim Hochladen des Bildes');
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function handleImageDelete(imageName) {
+    if (!confirm('Möchten Sie dieses Bild wirklich löschen?')) return;
+
+    fetch(`/api/images/${imageName}`, {
+      method: 'DELETE'
+    })
+      .then(response => {
+        if (!response.ok) throw new Error('Failed to delete image');
+
+        // Reset the image preview to default
+        const previewImg = document.querySelector(`#${imageName}-preview img`);
+        previewImg.src = `images/default-${imageName}.png`;
+
+        alert('Bild erfolgreich gelöscht');
+      })
+      .catch(error => {
+        console.error('Error deleting image:', error);
+        alert('Fehler beim Löschen des Bildes');
+      });
+  }
+
+  // Background image
+  const backgroundUpload = document.getElementById('background-upload');
+  const uploadBackgroundBtn = document.getElementById('upload-background-btn');
+  const deleteBackgroundBtn = document.getElementById('delete-background-btn');
+
+  uploadBackgroundBtn.addEventListener('click', () => {
+    if (backgroundUpload.files.length > 0) {
+      handleImageUpload(backgroundUpload.files[0], 'background');
+    }
+  });
+
+  deleteBackgroundBtn.addEventListener('click', () => {
+    handleImageDelete('background');
+  });
+
+  // Logo
+  const logoUpload = document.getElementById('logo-upload');
+  const uploadLogoBtn = document.getElementById('upload-logo-btn');
+  const deleteLogoBtn = document.getElementById('delete-logo-btn');
+
+  uploadLogoBtn.addEventListener('click', () => {
+    if (logoUpload.files.length > 0) {
+      handleImageUpload(logoUpload.files[0], 'logo');
+    }
+  });
+
+  deleteLogoBtn.addEventListener('click', () => {
+    handleImageDelete('logo');
+  });
+
 });

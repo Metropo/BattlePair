@@ -62,42 +62,42 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Game mode section
-    if (match.game_mode_id) {
-      const gameMode = gameModes.find(gm => gm.id == match.game_mode_id);
-      if (gameMode) {
-        const gamemodeContainer = document.createElement('div');
-        gamemodeContainer.classList.add('match-gamemode');
+            if (match.game_mode_id) {
+              const gameMode = gameModes.find(gm => gm.id == match.game_mode_id);
+              if (gameMode) {
+                const gamemodeContainer = document.createElement('div');
+                gamemodeContainer.classList.add('match-gamemode');
         
-        if (gameMode.icon) {
-          const iconImg = document.createElement('img');
-          iconImg.src = gameMode.icon;
-          iconImg.alt = gameMode.name;
-          gamemodeContainer.appendChild(iconImg);
-        }
+                if (gameMode.icon) {
+                  const iconImg = document.createElement('img');
+                  iconImg.src = gameMode.icon;
+                  iconImg.alt = gameMode.name;
+                  gamemodeContainer.appendChild(iconImg);
+                }
 
-        const detailsDiv = document.createElement('div');
-        detailsDiv.classList.add('gamemode-details');
-        const nameDiv = document.createElement('div');
-        nameDiv.classList.add('gamemode-name');
-        nameDiv.textContent = gameMode.name;
-        detailsDiv.appendChild(nameDiv);
+                const detailsDiv = document.createElement('div');
+                detailsDiv.classList.add('gamemode-details');
+                const nameDiv = document.createElement('div');
+                nameDiv.classList.add('gamemode-name');
+                nameDiv.textContent = gameMode.name;
+                detailsDiv.appendChild(nameDiv);
 
-        if (gameMode.description) {
-          const descDiv = document.createElement('div');
-          descDiv.classList.add('gamemode-desc');
-          descDiv.textContent = gameMode.description;
-          detailsDiv.appendChild(descDiv);
-        }
+                if (gameMode.description) {
+                  const descDiv = document.createElement('div');
+                  descDiv.classList.add('gamemode-desc');
+                  descDiv.textContent = gameMode.description;
+                  detailsDiv.appendChild(descDiv);
+                }
 
-        gamemodeContainer.appendChild(detailsDiv);
+                gamemodeContainer.appendChild(detailsDiv);
         card.appendChild(gamemodeContainer);
-      }
-    }
+              }
+            }
 
     // Participants section
-    const participantsContainer = document.createElement('div');
-    participantsContainer.classList.add('match-participants');
-
+              const participantsContainer = document.createElement('div');
+              participantsContainer.classList.add('match-participants');
+  
     // Sort participants by ID
     const sortedParticipants = match.participants.sort((a, b) => {
       // First sort by type (tables before walkins)
@@ -109,18 +109,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     sortedParticipants.forEach(p => {
-      const participant = globalParticipants.find(tp => tp.type === p.type && tp.id == p.id);
-      if (participant) {
-        const box = document.createElement('div');
-        box.classList.add('participant-box');
-        let html = `<div class="participant-main">${participant.displayMain}</div>`;
-        if (participant.displaySub) {
-          html += `<div class="participant-sub">${participant.displaySub}</div>`;
-        }
-        box.innerHTML = html;
-        participantsContainer.appendChild(box);
-      }
-    });
+                const participant = globalParticipants.find(tp => tp.type === p.type && tp.id == p.id);
+                if (participant) {
+                  const box = document.createElement('div');
+                  box.classList.add('participant-box');
+                  let html = `<div class="participant-main">${participant.displayMain}</div>`;
+                  if (participant.displaySub) {
+                    html += `<div class="participant-sub">${participant.displaySub}</div>`;
+                  }
+                  box.innerHTML = html;
+                  participantsContainer.appendChild(box);
+                }
+              });
 
     card.appendChild(participantsContainer);
 
@@ -214,7 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
     await buildMatchCardContent(matchCard, match, globalParticipants, gameModes, allMatches, estimatedStartTime);
 
     const container = document.getElementById('matches-container');
-    container.appendChild(matchCard);
+              container.appendChild(matchCard);
 
     // Trigger reflow and fade in
     matchCard.offsetHeight;
@@ -288,5 +288,5 @@ document.addEventListener('DOMContentLoaded', () => {
   setInterval(() => {
     loadMatches();
   }, 5000); // Poll every 5 seconds
-});
+  });
   

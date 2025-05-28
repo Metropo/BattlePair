@@ -63,6 +63,7 @@
       <button class="settings-tab-btn active" data-tab="general">Allgemein</button>
       <button class="settings-tab-btn" data-tab="gamemodes">Spielmodi</button>
       <button class="settings-tab-btn" data-tab="tables-settings">Tische</button>
+      <button class="settings-tab-btn" data-tab="images">Bilder</button>
       <button class="settings-tab-btn" data-tab="backup">Backup</button>
     </div>
 
@@ -103,6 +104,31 @@
       <ul id="settings-tables-list"></ul>
       <input type="text" id="new-table-name-settings" placeholder="Neuer Tischname">
       <button id="add-table-settings-btn">Tisch hinzufügen</button>
+    </div>
+
+    <div class="settings-tab-content" id="images-tab">
+      <h3>Bilder</h3>
+      <div class="image-settings">
+        <div class="image-group">
+          <h4>Hintergrundbild</h4>
+          <div class="image-preview" id="background-preview">
+            <img src="/api/images/background" alt="Hintergrund" onerror="this.src='images/default-background.png'">
+          </div>
+          <input type="file" id="background-upload" accept="image/*">
+          <button id="upload-background-btn">Hintergrund hochladen</button>
+          <button id="delete-background-btn" class="delete-btn">Hintergrund löschen</button>
+        </div>
+        
+        <div class="image-group">
+          <h4>Logo</h4>
+          <div class="image-preview" id="logo-preview">
+            <img src="/api/images/logo" alt="Logo" onerror="this.src='images/default-logo.png'">
+          </div>
+          <input type="file" id="logo-upload" accept="image/*">
+          <button id="upload-logo-btn">Logo hochladen</button>
+          <button id="delete-logo-btn" class="delete-btn">Logo löschen</button>
+        </div>
+      </div>
     </div>
 
     <div class="settings-tab-content" id="backup-tab">

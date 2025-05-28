@@ -15,6 +15,7 @@ app.use('/api/walkins', require('./routes/walkins'));
 app.use('/api/gamemodes', require('./routes/gamemodes'));
 app.use('/api/backup', require('./routes/backup'));
 app.use('/api/version', require('./routes/version'));
+app.use('/api/images', require('./routes/images'));
 
 // Start des Servers
 app.listen(port, () => {
