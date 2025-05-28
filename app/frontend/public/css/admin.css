@@ -1050,4 +1050,36 @@ button:hover {
 
 #history-container::-webkit-scrollbar-thumb:hover {
   background: #555;
+}
+
+/* Table card with temporary settings */
+.table-card.has-temp-settings {
+    border: 2px solid #4da6ff;
+    box-shadow: 0 0 10px rgba(77, 166, 255, 0.3);
+    position: relative;
+}
+
+.table-card.has-temp-settings::before {
+    content: "⚙️";
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: #4da6ff;
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.table-card.has-temp-settings h3 {
+    color: #4da6ff;
+}
+
+.table-card.has-temp-settings input {
+    border-color: #4da6ff;
 } 

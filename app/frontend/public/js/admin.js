@@ -115,6 +115,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const card = document.createElement('div');
     card.className = 'table-card';
     card.dataset.tableId = table.id;
+    
+    // Add has-temp-settings class if table has temporary settings
+    if (table.temp_name || (table.player_count && table.player_count > 0)) {
+        card.classList.add('has-temp-settings');
+    }
+    
     card.innerHTML = `
       <h3>${table.name}</h3>
       <label for="table-temp-name-${table.id}">Temporärer Name:</label>
