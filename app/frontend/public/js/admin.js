@@ -1049,6 +1049,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('match-length-minutes').value = settings.match_length_minutes || 15;
       document.getElementById('break-length-minutes').value = settings.break_length_minutes || 5;
       document.getElementById('max-players-per-round').value = settings.max_players_per_round || 0;
+      document.getElementById('display-zoom').value = settings.display_zoom || 100;
     } catch (error) {
       console.error('Error loading settings:', error);
       alert('Fehler beim Laden der Einstellungen');
@@ -1060,7 +1061,8 @@ document.addEventListener('DOMContentLoaded', () => {
       display_matches_count: parseInt(document.getElementById('display-matches-count').value),
       match_length_minutes: parseInt(document.getElementById('match-length-minutes').value),
       break_length_minutes: parseInt(document.getElementById('break-length-minutes').value),
-      max_players_per_round: parseInt(document.getElementById('max-players-per-round').value)
+      max_players_per_round: parseInt(document.getElementById('max-players-per-round').value),
+      display_zoom: parseInt(document.getElementById('display-zoom').value)
     };
 
     try {

@@ -6,7 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
     gameModes: [],
     settings: {
       display_matches_count: 4, // Default value
-      max_players_per_round: 0 // Default value
+      max_players_per_round: 0, // Default value
+      display_zoom: 100 // Default value
     }
   };
 
@@ -16,6 +17,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const response = await fetch('/api/settings');
       const settings = await response.json();
       lastState.settings = settings;
+      
+      // Apply zoom setting
+      document.body.style.zoom = `${settings.display_zoom || 100}%`;
     } catch (error) {
       console.error('Error loading settings:', error);
     }
