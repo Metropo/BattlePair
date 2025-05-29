@@ -19,7 +19,7 @@ exports.createBackup = async (req, res) => {
     const { includeWalkins = false, includeMatches = false } = req.body;
     
     // Always include these tables
-    const tables = ['tables', 'game_modes', 'settings'];
+    const tables = ['tables', 'game_modes', 'settings', 'images'];
     
     // Add optional tables if requested
     if (includeWalkins) tables.push('walkins');
@@ -87,11 +87,17 @@ exports.restoreBackup = async (req, res) => {
           const validColumns = Object.keys(row).filter(key => columns.includes(key));
           const placeholders = validColumns.map(() => '?').join(',');
           const values = validColumns.map(key => row[key]);
-          
+          // Convert any Buffer objects back from JSON representation
+          let processedValues = values.map(val => {
+            if (val && typeof val === 'object' && val.type === 'Buffer' && Array.isArray(val.data)) {
+              return Buffer.from(val.data);
+            }
+            return val;
+          });
           await new Promise((resolve, reject) => {
             db.run(
               `INSERT INTO ${tableName} (${validColumns.join(',')}) VALUES (${placeholders})`,
-              values,
+              processedValues,
               (err) => {
                 if (err) reject(err);
                 else resolve();
