@@ -152,10 +152,34 @@ exports.updateMatch = (req, res) => {
 // Ein Match als gestartet markieren
 // Erwartet: { id }
 exports.startMatch = (req, res) => {
-  const { id } = req.body;
+  let { id } = req.body;
   if (!id) {
-    return res.status(400).json({ error: 'Match-ID ist erforderlich' });
+    // If no ID provided, get match with lowest ID that isn't started
+    db.get(`
+      SELECT id 
+      FROM matches 
+      WHERE is_started = 0 
+      ORDER BY id ASC 
+      LIMIT 1
+    `, [], (err, match) => {
+      if (err) {
+        console.error('Fehler beim Abrufen des nächsten Matches:', err);
+        return res.status(500).json({ error: 'Fehler beim Abrufen des nächsten Matches' });
+      }
+      if (!match) {
+        return res.status(404).json({ error: 'Kein ungestartetes Match gefunden' });
+      }
+      // Store id in outer scope so it persists after callback
+      id = match.id;
+      if (id) {
+        exports.startMatch({ body: { id: match.id } }, res);
+        return;
+      }
+    });
+    if (!id) {
+    return;
   }
+}
   db.run(`
     UPDATE matches 
     SET is_started = 1, 
